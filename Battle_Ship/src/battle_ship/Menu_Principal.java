@@ -467,14 +467,12 @@ public class Menu_Principal extends JFrame {
     /* ===================== SELECCIÓN DE OPONENTE ===================== */
     private void seleccionarOponente() {
         Player[] jugadores = sistema.getRanking();
-
         int count = 0;
         for (Player p : jugadores) {
             if (p != null && !p.getUsername().equals(jugadorActual.getUsername())) {
                 count++;
             }
         }
-
         if (count == 0) {
             JOptionPane.showMessageDialog(this, "No hay oponentes disponibles.");
             return;
@@ -497,12 +495,54 @@ public class Menu_Principal extends JFrame {
                 opciones,
                 opciones[0]
         );
-
         if (rival == null) {
-            return;
+            return; // Canceló
         }
-        JOptionPane.showMessageDialog(this,
-                "Batalla iniciada contra " + rival + "\n(Conecte aquí el tablero)");
+        // ===================== VENTANA DE SETUP =====================
+        JFrame setupFrame = new JFrame(
+                "Coloca tus barcos - Jugador: " + jugadorActual.getUsername()
+        );
+        Orden setup = new Orden();
+        setupFrame.add(setup);
+
+        JPanel bottom = new JPanel();
+        JButton randomBtn = new JButton("Random");
+        randomBtn.setFont(new Font("Impact", Font.BOLD, 18));
+        randomBtn.setBackground(Color.GREEN);
+        randomBtn.setForeground(Color.BLACK);
+        randomBtn.addActionListener(e -> setup.colocarRandom());
+
+        JButton startGame = new JButton("Jugar");
+        startGame.setFont(new Font("Impact", Font.BOLD, 18));
+        startGame.setBackground(Color.BLUE);
+        startGame.setForeground(Color.WHITE);
+        startGame.addActionListener(e -> {
+            sistema.setTableroJugador(setup.getShipTypes()); // guarda el tablero
+            setupFrame.dispose();
+
+            // ===================== VENTANA DEL JUEGO =====================
+            JFrame ventanaJuego = new JFrame(
+                    "Battleship - " + jugadorActual.getUsername() + " vs " + rival
+            );
+            ventanaJuego.setSize(750, 750);
+            ventanaJuego.setLocationRelativeTo(null);
+            ventanaJuego.setResizable(false);
+            ventanaJuego.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            Tablero tablero = new Tablero();
+            ventanaJuego.add(tablero);
+
+            ventanaJuego.setVisible(true);
+        });
+
+        bottom.add(randomBtn);
+        bottom.add(startGame);
+        setupFrame.add(bottom, BorderLayout.SOUTH);
+
+        setupFrame.setSize(600, 700);
+        setupFrame.setLocationRelativeTo(this);
+        setupFrame.setResizable(false);
+        setupFrame.setVisible(true);
     }
 
     private boolean passwordValida(char[] pass) {

@@ -8,7 +8,6 @@ package Logica;
  *
  * @author Nathan
  */
-
 public class Battleship {
 
     private Player[] jugadores;
@@ -19,6 +18,8 @@ public class Battleship {
     private String modoJuego = "TUTORIAL";
 
     private static Battleship instancia;
+    private String[][] tableroJugador;   // tablero del jugador
+    private String[][] tableroOponente;  // tablero del rival (opcional)
 
     private Battleship() {
         jugadores = new Player[20];
@@ -34,11 +35,14 @@ public class Battleship {
     }
 
     /* ===================== USUARIOS ===================== */
-
     public boolean registrarJugador(String user, char[] pass) {
-        if (user == null || user.trim().isEmpty()) return false;
+        if (user == null || user.trim().isEmpty()) {
+            return false;
+        }
 
-        if (buscarJugador(user) != null) return false;
+        if (buscarJugador(user) != null) {
+            return false;
+        }
 
         if (totalJugadores < jugadores.length) {
             jugadores[totalJugadores++] = new Player(user, pass);
@@ -75,7 +79,9 @@ public class Battleship {
 
     /* ===================== ELIMINAR CUENTA ===================== */
     public boolean eliminarJugador(Player jugador) {
-        if (jugador == null) return false;
+        if (jugador == null) {
+            return false;
+        }
 
         for (int i = 0; i < totalJugadores; i++) {
             if (jugadores[i] == jugador) {
@@ -91,15 +97,23 @@ public class Battleship {
     }
 
     /* ===================== CONFIG ===================== */
+    public String getDificultad() {
+        return dificultad;
+    }
 
-    public String getDificultad() { return dificultad; }
-    public void setDificultad(String dificultad) { this.dificultad = dificultad; }
+    public void setDificultad(String dificultad) {
+        this.dificultad = dificultad;
+    }
 
-    public String getModoJuego() { return modoJuego; }
-    public void setModoJuego(String modoJuego) { this.modoJuego = modoJuego; }
+    public String getModoJuego() {
+        return modoJuego;
+    }
+
+    public void setModoJuego(String modoJuego) {
+        this.modoJuego = modoJuego;
+    }
 
     /* ===================== RANKING ===================== */
-
     public Player[] getRanking() {
         Player[] ranking = new Player[totalJugadores];
         System.arraycopy(jugadores, 0, ranking, 0, totalJugadores);
@@ -114,5 +128,29 @@ public class Battleship {
             }
         }
         return ranking;
+    }
+
+    // Tablero jugador
+    public void setTableroJugador(String[][] tablero) {
+        tableroJugador = new String[tablero.length][tablero[0].length];
+        for (int i = 0; i < tablero.length; i++) {
+            System.arraycopy(tablero[i], 0, tableroJugador[i], 0, tablero[i].length);
+        }
+    }
+
+    public String[][] getTableroJugador() {
+        return tableroJugador;
+    }
+
+    // Tablero oponente (opcional)
+    public void setTableroOponente(String[][] tablero) {
+        tableroOponente = new String[tablero.length][tablero[0].length];
+        for (int i = 0; i < tablero.length; i++) {
+            System.arraycopy(tablero[i], 0, tableroOponente[i], 0, tablero[i].length);
+        }
+    }
+
+    public String[][] getTableroOponente() {
+        return tableroOponente;
     }
 }
