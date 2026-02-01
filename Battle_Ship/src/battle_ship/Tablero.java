@@ -2,6 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
+
 package battle_ship;
 
 import javax.swing.*;
@@ -9,23 +10,27 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.imageio.ImageIO;
 import java.io.IOException;
+import java.util.Random;
+
 /**
  *
  * @author Nathan
  */
-
 public class Tablero extends JPanel {
 
     private static final int SIZE = 8;
 
     private JButton[][] celdas;
     private String[][] matrizLogica;
+
     private Image fondoTablero;
 
     private boolean horizontal = true;
+    private Barco[] barcos;
+    private int barcoIndex = 0;
     private Barco barcoActual = null;
 
-    /* ===================== BARCO ===================== */
+    // Clase interna Barco
     private static class Barco {
         String codigo;
         int tamaño;
@@ -38,14 +43,6 @@ public class Tablero extends JPanel {
         }
     }
 
-    private Barco[] barcos = {
-        new Barco("PA", 5, "P"), // P1-P5
-        new Barco("AZ", 4, "A"), // A1-A4
-        new Barco("SM", 3, "S"), // S1-S3
-        new Barco("DT", 2, "D")  // D1-D2
-    };
-
-    /* ===================== CONSTRUCTOR ===================== */
     public Tablero() {
         setLayout(new GridLayout(SIZE, SIZE, 2, 2));
         setOpaque(false);
@@ -53,9 +50,18 @@ public class Tablero extends JPanel {
         celdas = new JButton[SIZE][SIZE];
         matrizLogica = new String[SIZE][SIZE];
 
+        // Inicializar barcos
+        barcos = new Barco[]{
+            new Barco("PA", 5, "P"),
+            new Barco("AZ", 4, "A"),
+            new Barco("SM", 3, "S"),
+            new Barco("DT", 2, "D")
+        };
+        barcoActual = barcos[barcoIndex];
+
+        // Cargar fondo
         try {
-            fondoTablero = ImageIO.read(
-                getClass().getResource("/Imagenes/fjuego.png"));
+            fondoTablero = ImageIO.read(getClass().getResource("/Imagenes/fjuego.png"));
         } catch (Exception e) {
             System.out.println("No se pudo cargar fondo fjuego");
         }
@@ -68,40 +74,38 @@ public class Tablero extends JPanel {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_R) {
                     horizontal = !horizontal;
+                    JOptionPane.showMessageDialog(null,
+                            "Orientación: " + (horizontal ? "Horizontal" : "Vertical"));
                 }
             }
         });
+
+        mostrarMensajeBarco();
     }
 
-    /* ===================== TABLERO ===================== */
+    /* ===================== INICIALIZAR TABLERO ===================== */
     private void inicializarTablero() {
         removeAll();
-
         for (int f = 0; f < SIZE; f++) {
             for (int c = 0; c < SIZE; c++) {
-
                 JButton btn = new JButton();
                 btn.setFont(new Font("Arial", Font.BOLD, 16));
                 btn.setForeground(Color.YELLOW);
                 btn.setBackground(new Color(40, 40, 40));
                 btn.setFocusPainted(false);
-
-                // 🔒 ELIMINA EFECTO HOVER
                 btn.setRolloverEnabled(false);
                 btn.setContentAreaFilled(false);
                 btn.setOpaque(true);
-
                 btn.setText("~");
 
-                int fila = f;
-                int col = c;
-                btn.addActionListener(e -> manejarClick(fila, col));
+                final int fila = f;
+                final int col = c;
+                btn.addActionListener(e -> colocarBarcoManual(fila, col));
 
                 celdas[f][c] = btn;
                 add(btn);
             }
         }
-
         revalidate();
         repaint();
     }
@@ -112,40 +116,53 @@ public class Tablero extends JPanel {
                 matrizLogica[i][j] = null;
     }
 
-    /* ===================== CLICK ===================== */
-    private void manejarClick(int fila, int col) {
+    /* ===================== COLOCAR BARCO MANUAL ===================== */
+    private void colocarBarcoManual(int fila, int col) {
+        if (barcoActual == null) return;
 
-        if (!celdas[fila][col].getText().equals("~"))
+        if (!puedeColocar(barcoActual, fila, col, horizontal)) {
+            JOptionPane.showMessageDialog(this, "No se puede colocar aquí");
             return;
-
-        if (matrizLogica[fila][col] != null) {
-            mostrarImagenBarco(fila, col);
-        } else {
-            celdas[fila][col].setText("F");
-            celdas[fila][col].setForeground(Color.YELLOW);
         }
+
+        for (int i = 0; i < barcoActual.tamaño; i++) {
+            int f = fila + (horizontal ? 0 : i);
+            int c = col + (horizontal ? i : 0);
+            matrizLogica[f][c] = barcoActual.prefijo + (i + 1);
+
+            try {
+                ImageIcon icon = new ImageIcon(getClass().getResource("/Imagenes/barcos/"
+                        + barcoActual.prefijo + (i + 1) + ".png"));
+                Image img = icon.getImage().getScaledInstance(
+                        celdas[f][c].getWidth(),
+                        celdas[f][c].getHeight(),
+                        Image.SCALE_SMOOTH
+                );
+                celdas[f][c].setIcon(new ImageIcon(img));
+                celdas[f][c].setText("");
+            } catch (Exception e) {
+                celdas[f][c].setText(barcoActual.prefijo + (i + 1));
+            }
+        }
+
+        barcoIndex++;
+        if (barcoIndex < barcos.length) {
+            barcoActual = barcos[barcoIndex];
+        } else {
+            barcoActual = null;
+            JOptionPane.showMessageDialog(this, "Todos los barcos colocados!");
+        }
+        mostrarMensajeBarco();
     }
 
-    /* ===================== IMÁGENES ===================== */
-    private void mostrarImagenBarco(int fila, int col) {
-        try {
-            String pieza = matrizLogica[fila][col]; // P1, A3, S2, D1
-            ImageIcon icono = new ImageIcon(
-                getClass().getResource("/Imagenes/barcos/" + pieza + ".png")
-            );
-
-            Image img = icono.getImage().getScaledInstance(
-                celdas[fila][col].getWidth(),
-                celdas[fila][col].getHeight(),
-                Image.SCALE_SMOOTH
-            );
-
-            celdas[fila][col].setIcon(new ImageIcon(img));
-            celdas[fila][col].setText("");
-
-        } catch (Exception e) {
-            System.out.println("No se encontró imagen del barco");
+    private boolean puedeColocar(Barco b, int fila, int col, boolean horizontal) {
+        for (int i = 0; i < b.tamaño; i++) {
+            int f = fila + (horizontal ? 0 : i);
+            int c = col + (horizontal ? i : 0);
+            if (f < 0 || f >= SIZE || c < 0 || c >= SIZE) return false;
+            if (matrizLogica[f][c] != null) return false;
         }
+        return true;
     }
 
     /* ===================== RANDOM ===================== */
@@ -153,43 +170,53 @@ public class Tablero extends JPanel {
         limpiarMatrizLogica();
         inicializarTablero();
 
+        Random rand = new Random();
+
         for (Barco b : barcos) {
             boolean colocado = false;
-
             while (!colocado) {
-                boolean hor = Math.random() < 0.5;
-                int fila = (int) (Math.random() * SIZE);
-                int col = (int) (Math.random() * SIZE);
-
+                int fila = rand.nextInt(SIZE);
+                int col = rand.nextInt(SIZE);
+                boolean hor = rand.nextBoolean();
                 if (puedeColocar(b, fila, col, hor)) {
-                    colocarBarco(b, fila, col, hor);
+                    for (int i = 0; i < b.tamaño; i++) {
+                        int f = fila + (hor ? 0 : i);
+                        int c = col + (hor ? i : 0);
+                        matrizLogica[f][c] = b.prefijo + (i + 1);
+                        try {
+                            ImageIcon icon = new ImageIcon(getClass().getResource("/Imagenes/barcos/"
+                                    + b.prefijo + (i + 1) + ".png"));
+                            Image img = icon.getImage().getScaledInstance(
+                                    celdas[f][c].getWidth(),
+                                    celdas[f][c].getHeight(),
+                                    Image.SCALE_SMOOTH
+                            );
+                            celdas[f][c].setIcon(new ImageIcon(img));
+                            celdas[f][c].setText("");
+                        } catch (Exception e) {
+                            celdas[f][c].setText(b.prefijo + (i + 1));
+                        }
+                    }
                     colocado = true;
                 }
             }
         }
+        barcoIndex = barcos.length;
+        barcoActual = null;
+        mostrarMensajeBarco();
     }
 
-    private boolean puedeColocar(Barco b, int fila, int col, boolean horizontal) {
-        for (int i = 0; i < b.tamaño; i++) {
-            int f = fila + (horizontal ? 0 : i);
-            int c = col + (horizontal ? i : 0);
-
-            if (f < 0 || f >= SIZE || c < 0 || c >= SIZE)
-                return false;
-
-            if (matrizLogica[f][c] != null)
-                return false;
+    /* ===================== MENSAJE BARCO ===================== */
+    private void mostrarMensajeBarco() {
+        if (barcoActual != null) {
+            String msg = "Coloca tu barco: " + barcoActual.codigo +
+                    " (" + barcoActual.tamaño + " casillas)";
+            JOptionPane.showMessageDialog(this, msg);
         }
-        return true;
     }
 
-    private void colocarBarco(Barco b, int fila, int col, boolean horizontal) {
-        for (int i = 0; i < b.tamaño; i++) {
-            int f = fila + (horizontal ? 0 : i);
-            int c = col + (horizontal ? i : 0);
-
-            matrizLogica[f][c] = b.prefijo + (i + 1);
-        }
+    public String[][] getMatrizLogica() {
+        return matrizLogica;
     }
 
     /* ===================== FONDO ===================== */
@@ -201,4 +228,3 @@ public class Tablero extends JPanel {
         }
     }
 }
-
