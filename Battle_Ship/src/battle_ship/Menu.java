@@ -52,7 +52,7 @@ public class Menu extends JFrame {
         setVisible(true);
     }
 
-    /* ===================== DISEÑO VISUAL MEJORADO ===================== */
+    //Fondo
     private class BackgroundPanel extends JPanel {
 
         @Override
@@ -101,10 +101,6 @@ public class Menu extends JFrame {
         }
     }
 
-    /**
-     * EFECTO NEÓN: Dibuja el borde azul en múltiples direcciones para que sea
-     * muy notable.
-     */
     private JLabel createShadowLabel(String text, int fontSize, Color borderBlue) {
         JLabel label = new JLabel(text) {
             @Override
@@ -112,14 +108,12 @@ public class Menu extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-                // Dibujar el "resplandor" azul cyan en 4 direcciones
                 g2.setColor(borderBlue);
                 g2.drawString(getText(), 2, fontSize + 2);
                 g2.drawString(getText(), -2, fontSize - 2);
                 g2.drawString(getText(), 2, fontSize - 2);
                 g2.drawString(getText(), -2, fontSize + 2);
 
-                // Texto principal en GRIS CARBÓN OSCURO
                 g2.setColor(new Color(40, 40, 40));
                 g2.drawString(getText(), 0, fontSize);
 
@@ -132,7 +126,7 @@ public class Menu extends JFrame {
         return label;
     }
 
-    /* ===================== CONSTRUCCIÓN DE PANELES ===================== */
+    //Paneles
     private JPanel buildUI() {
         BackgroundPanel bg = new BackgroundPanel();
         bg.setLayout(new GridBagLayout());
@@ -269,7 +263,7 @@ public class Menu extends JFrame {
         return p;
     }
 
-    /* ===================== LÓGICA DE TRANSICIÓN ===================== */
+    //Logica entrada de inicio
     private void ejecutarLogin() {
         String user = loginUserField.getText();
         char[] pass = loginPassField.getPassword();
@@ -293,7 +287,7 @@ public class Menu extends JFrame {
             return;
         }
 
-        if (!passwordValida(pass)) { 
+        if (!passwordValida(pass)) {
             JOptionPane.showMessageDialog(this,
                     "La contraseña debe tener mínimo 5 caracteres,\n"
                     + "una letra mayúscula, un número y un símbolo.");
@@ -336,8 +330,8 @@ public class Menu extends JFrame {
         new Menu_Principal(sistema, this, sistema.getJugadorActual()).setVisible(true);
     }
 
-    public static void main(String[] args) {
+    /* public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Menu());
     }
+     */
 }
-  

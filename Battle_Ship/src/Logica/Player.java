@@ -8,7 +8,6 @@ package Logica;
  *
  * @author Nathan
  */
-
 public class Player {
 
     private String username;
@@ -56,12 +55,18 @@ public class Player {
         puntos += p;
     }
 
+    // ✅ MÉTODO COMPATIBLE CON EL JUEGO
+    public void sumarPuntos(int p) {
+        addPuntos(p);
+    }
+
     /* ===================== LOGS ===================== */
     public void addLog(String mensaje) {
         for (int i = Math.min(logCount, 9); i > 0; i--) {
             logs[i] = logs[i - 1];
         }
         logs[0] = mensaje;
+
         if (logCount < 10) {
             logCount++;
         }
@@ -81,3 +86,4 @@ public class Player {
         return true;
     }
 }
+

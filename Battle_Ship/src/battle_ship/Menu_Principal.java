@@ -23,7 +23,7 @@ public class Menu_Principal extends JFrame {
 
     private Image backgroundImage, buttonImage, buttonHoverImage;
 
-    /* ===================== PANEL DE FONDO ===================== */
+    //Panel de Fondo
     private class BackgroundPanel extends JPanel {
 
         @Override
@@ -35,7 +35,7 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    /* ===================== BOTÓN PERSONALIZADO ===================== */
+    //Fondo de Botones
     private class ThemedButton extends JButton {
 
         private boolean hovered = false;
@@ -72,7 +72,7 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    /* ===================== CONSTRUCTOR ===================== */
+    //Constructor
     public Menu_Principal(Battleship sistema, Menu menu, Player jugador) {
         this.sistema = sistema;
         this.menuReferencia = menu;
@@ -113,7 +113,7 @@ public class Menu_Principal extends JFrame {
         setContentPane(fondo);
     }
 
-    /* ===================== MENÚ PRINCIPAL ===================== */
+    //Menu Principal con Botones
     private JPanel menuPrincipal() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
@@ -160,7 +160,7 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    /* ===================== PANEL PERFIL ===================== */
+    //SubPanel de Perfil
     private JPanel panelPerfil() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
@@ -198,7 +198,7 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    /* ===================== SUBMENÚ VER MIS DATOS ===================== */
+    //SubMenu de Datos
     private JPanel panelVerMisDatos() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
@@ -248,7 +248,7 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    /* ===================== SUBMENÚ MODIFICAR MIS DATOS ===================== */
+    //SubMenu de Modificar Datos
     private JPanel panelEditarMisDatos() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
@@ -272,7 +272,7 @@ public class Menu_Principal extends JFrame {
 
         c.gridy = 1;
         JLabel labelUsername = new JLabel("Nuevo Username");
-        labelUsername.setForeground(Color.WHITE); // Cambia el color del texto a blanco
+        labelUsername.setForeground(Color.WHITE);
         infoPanel.add(labelUsername, c);
 
         c.gridy = 2;
@@ -280,7 +280,7 @@ public class Menu_Principal extends JFrame {
 
         c.gridy = 3;
         JLabel labelPassword = new JLabel("Nuevo Password");
-        labelPassword.setForeground(Color.WHITE); // Cambia el color del texto a blanco
+        labelPassword.setForeground(Color.WHITE);
         infoPanel.add(labelPassword, c);
         c.gridy = 4;
         infoPanel.add(txtPass, c);
@@ -321,7 +321,7 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    /* ===================== ELIMINAR CUENTA ===================== */
+    //Opcion Eliminar Cuenta
     private void eliminarCuenta() {
         int op = JOptionPane.showConfirmDialog(this,
                 "¿Está seguro de eliminar su cuenta?",
@@ -336,7 +336,7 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    /* ===================== PANEL CONFIGURACIÓN ===================== */
+    //Sub Panel de Configuracion de Juego
     private JPanel panelConfiguracion() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
@@ -352,10 +352,14 @@ public class Menu_Principal extends JFrame {
         p.add(title, c);
 
         c.gridy = 1;
-        p.add(new ThemedButton("DIFICULTAD"), c);
+        ThemedButton dificultad = new ThemedButton("DIFICULTAD");
+        dificultad.addActionListener(e -> seleccionarDificultad());
+        p.add(dificultad, c);
 
         c.gridy = 2;
-        p.add(new ThemedButton("MODO DE JUEGO"), c);
+        ThemedButton modo = new ThemedButton("MODO DE JUEGO");
+        modo.addActionListener(e -> seleccionarModoJuego());
+        p.add(modo, c);
 
         c.gridy = 3;
         ThemedButton back = new ThemedButton("VOLVER");
@@ -365,7 +369,7 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    /* ===================== PANEL REPORTES ===================== */
+    //Sub Panel de Reportes
     private JPanel panelReportes() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
@@ -398,7 +402,7 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    /* ===================== PANEL JUEGOS ===================== */
+    //Sub Panel de Ultimos 10 Juegos Jugados
     private JPanel panelUltimosJuegos() {
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
@@ -464,15 +468,18 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    /* ===================== SELECCIÓN DE OPONENTE ===================== */
+    //Opcion Seleccionar Oponente
     private void seleccionarOponente() {
+
         Player[] jugadores = sistema.getRanking();
         int count = 0;
+
         for (Player p : jugadores) {
             if (p != null && !p.getUsername().equals(jugadorActual.getUsername())) {
                 count++;
             }
         }
+
         if (count == 0) {
             JOptionPane.showMessageDialog(this, "No hay oponentes disponibles.");
             return;
@@ -495,51 +502,60 @@ public class Menu_Principal extends JFrame {
                 opciones,
                 opciones[0]
         );
+
         if (rival == null) {
-            return; // Canceló
+            return;
         }
-        // ===================== VENTANA DE SETUP =====================
+
+        /* ================== ORDEN DE BARCOS ================== */
+        Tablero_Logico tableroJugador = new Tablero_Logico();
+
         JFrame setupFrame = new JFrame(
                 "Coloca tus barcos - Jugador: " + jugadorActual.getUsername()
         );
-        Orden setup = new Orden();
-        setupFrame.add(setup);
+
+        Orden setupPanel = new Orden(tableroJugador);
+        setupFrame.add(setupPanel, BorderLayout.CENTER);
 
         JPanel bottom = new JPanel();
-        JButton randomBtn = new JButton("Random");
-        randomBtn.setFont(new Font("Impact", Font.BOLD, 18));
-        randomBtn.setBackground(Color.GREEN);
-        randomBtn.setForeground(Color.BLACK);
-        randomBtn.addActionListener(e -> setup.colocarRandom());
 
-        JButton startGame = new JButton("Jugar");
+        JButton startGame = new JButton("JUGAR");
         startGame.setFont(new Font("Impact", Font.BOLD, 18));
         startGame.setBackground(Color.BLUE);
         startGame.setForeground(Color.WHITE);
+
         startGame.addActionListener(e -> {
-            sistema.setTableroJugador(setup.getShipTypes()); // guarda el tablero
             setupFrame.dispose();
 
-            // ===================== VENTANA DEL JUEGO =====================
+            /* ================== TABLEROS DE BATALLA ================== */
+            Tablero_Logico tableroEnemigo = new Tablero_Logico();
+            tableroEnemigo.barcos = tableroJugador.barcos; // mismos tipos
+            tableroEnemigo.generarRandom();
+
             JFrame ventanaJuego = new JFrame(
                     "Battleship - " + jugadorActual.getUsername() + " vs " + rival
             );
-            ventanaJuego.setSize(750, 750);
+            ventanaJuego.setSize(900, 750);
             ventanaJuego.setLocationRelativeTo(null);
             ventanaJuego.setResizable(false);
             ventanaJuego.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-            Tablero tablero = new Tablero();
-            ventanaJuego.add(tablero);
+            Tablero batalla = new Tablero(
+                    jugadorActual.getUsername(),
+                    rival,
+                    tableroJugador,
+                    tableroEnemigo,
+                    sistema.esTutorial()
+            );
 
+            ventanaJuego.add(batalla);
             ventanaJuego.setVisible(true);
         });
 
-        bottom.add(randomBtn);
         bottom.add(startGame);
         setupFrame.add(bottom, BorderLayout.SOUTH);
 
-        setupFrame.setSize(600, 700);
+        setupFrame.setSize(650, 700);
         setupFrame.setLocationRelativeTo(this);
         setupFrame.setResizable(false);
         setupFrame.setVisible(true);
@@ -565,6 +581,46 @@ public class Menu_Principal extends JFrame {
         }
 
         return mayus && numero && simbolo;
+    }
+
+    private void seleccionarModoJuego() {
+        String[] opciones = {"TUTORIAL", "ARCADE"};
+
+        String sel = (String) JOptionPane.showInputDialog(
+                this,
+                "Seleccione el modo de juego",
+                "Modo de Juego",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                sistema.getModoJuego()
+        );
+
+        if (sel != null) {
+            sistema.setModoJuego(sel);
+            JOptionPane.showMessageDialog(this,
+                    "Modo de juego cambiado a: " + sel);
+        }
+    }
+
+    private void seleccionarDificultad() {
+        String[] opciones = {"EASY", "NORMAL", "EXPERT", "GENIUS"};
+
+        String sel = (String) JOptionPane.showInputDialog(
+                this,
+                "Seleccione dificultad",
+                "Dificultad",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                sistema.getDificultad()
+        );
+
+        if (sel != null) {
+            sistema.setDificultad(sel);
+            JOptionPane.showMessageDialog(this,
+                    "Dificultad cambiada a: " + sel);
+        }
     }
 
 }

@@ -6,206 +6,139 @@ package battle_ship;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.Random;
+import java.util.*;
 /**
  *
  * @author Nathan
  */
 public class Orden extends JPanel {
 
-    private JButton[][] gridButtons;
-    private String[][] shipTypes;
-    private int rows = 8, cols = 8;
-
+    private JButton[][] botones = new JButton[8][8];
+    private Tablero_Logico tablero;
     private boolean horizontal = true;
+
     private Barco[] barcos;
-    private int barcoIndex = 0; // Para ir colocando barcos en orden
-    private Barco barcoActual;
+    private int index = 0;
 
-    // Clase interna para definir barcos
-    public static class Barco {
-        String codigo;
-        int tamaño;
-        String prefijo;
-        Barco(String c, int t, String p) {
-            codigo = c;
-            tamaño = t;
-            prefijo = p;
-        }
-    }
-
-    public Orden() {
+    public Orden(Tablero_Logico t) {
+        this.tablero = t;
         setLayout(new BorderLayout());
 
-        // Inicializar barcos
         barcos = new Barco[]{
-                new Barco("PA", 5, "P"), // Portaaviones
-                new Barco("AZ", 4, "A"), // Acorazado
-                new Barco("SM", 3, "S"), // Submarino
-                new Barco("DT", 2, "D")  // Destructor
+                new Barco("PA", "P", 5),
+                new Barco("AZ", "A", 4),
+                new Barco("SM", "S", 3),
+                new Barco("DT", "D", 2)
         };
-        barcoActual = barcos[barcoIndex];
 
-        // Panel del tablero
-        JPanel gridPanel = new JPanel(new GridLayout(rows, cols));
-        gridButtons = new JButton[rows][cols];
-        shipTypes = new String[rows][cols];
+        tablero.barcos.clear();
+        tablero.barcos.addAll(Arrays.asList(barcos));
 
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                JButton b = new JButton();
-                b.setBackground(Color.CYAN);
+        JPanel grid = new JPanel(new GridLayout(8, 8));
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                JButton b = new JButton("~");
+                b.setFocusPainted(false);
+                b.setBackground(new Color(180, 210, 230));
                 final int r = i, c = j;
-                b.addActionListener(e -> colocarBarcoManual(r, c));
-                gridButtons[i][j] = b;
-                gridPanel.add(b);
+                b.addActionListener(e -> colocar(r, c));
+                botones[i][j] = b;
+                grid.add(b);
             }
         }
 
-        add(gridPanel, BorderLayout.CENTER);
+        JButton rotar = new JButton("Rotar");
+        rotar.addActionListener(e -> horizontal = !horizontal);
 
-        // Panel de opciones
-        JPanel panelOpciones = new JPanel();
-        panelOpciones.setLayout(new BoxLayout(panelOpciones, BoxLayout.Y_AXIS));
+        JButton random = new JButton("Random");
+        random.addActionListener(e -> colocarRandom());
 
-        JButton btnOrientacion = new JButton("Cambiar orientación");
-        btnOrientacion.addActionListener(e -> {
-            horizontal = !horizontal;
-            JOptionPane.showMessageDialog(this,
-                    "Orientación: " + (horizontal ? "Horizontal" : "Vertical"));
-        });
+        JPanel top = new JPanel();
+        top.add(random);
 
-        JButton btnRandom = new JButton("Colocar Random");
-        btnRandom.addActionListener(e -> colocarRandom());
+        JPanel bottom = new JPanel();
+        bottom.add(rotar);
 
-        panelOpciones.add(btnOrientacion);
-        panelOpciones.add(Box.createVerticalStrut(10));
-        panelOpciones.add(btnRandom);
-
-        add(panelOpciones, BorderLayout.EAST);
-
-        actualizarMensajeBarco();
+        add(top, BorderLayout.NORTH);
+        add(grid, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
     }
 
-    /* ===================== COLOCACIÓN MANUAL ===================== */
-    private void colocarBarcoManual(int row, int col) {
-        if (barcoActual == null) return;
+    private void colocar(int f, int c) {
 
-        if (!puedeColocar(row, col, barcoActual.tamaño, horizontal)) {
-            JOptionPane.showMessageDialog(this, "No se puede colocar aquí");
+        if (index >= barcos.length) {
+            JOptionPane.showMessageDialog(this,
+                    "Ya no hay barcos que colocar");
             return;
         }
 
-        // Colocar barco en la matriz y mostrar imágenes
-        for (int i = 0; i < barcoActual.tamaño; i++) {
-            int r = row + (horizontal ? 0 : i);
-            int c = col + (horizontal ? i : 0);
-            shipTypes[r][c] = barcoActual.prefijo + (i + 1);
-            try {
-                ImageIcon icon = new ImageIcon(getClass().getResource("/Imagenes/barcos/"
-                        + barcoActual.prefijo + (i + 1) + ".png"));
-                Image img = icon.getImage().getScaledInstance(
-                        gridButtons[r][c].getWidth(),
-                        gridButtons[r][c].getHeight(),
-                        Image.SCALE_SMOOTH
-                );
-                gridButtons[r][c].setIcon(new ImageIcon(img));
-                gridButtons[r][c].setText("");
-            } catch (Exception e) {
-                gridButtons[r][c].setText(barcoActual.prefijo + (i + 1));
-            }
+        Barco b = barcos[index];
+
+        if (!tablero.puedeColocar(b, f, c, horizontal)) {
+            JOptionPane.showMessageDialog(this,
+                    "No se puede colocar aquí");
+            return;
         }
 
-        // Pasar al siguiente barco
-        barcoIndex++;
-        if (barcoIndex < barcos.length) {
-            barcoActual = barcos[barcoIndex];
-        } else {
-            barcoActual = null;
-            JOptionPane.showMessageDialog(this, "Todos los barcos colocados!");
+        for (int i = 0; i < b.tamaño; i++) {
+            int ff = f + (horizontal ? 0 : i);
+            int cc = c + (horizontal ? i : 0);
+
+            tablero.matriz[ff][cc] = b.prefijo;
+            botones[ff][cc].setIcon(
+                    escalarImagen(b.prefijo, i + 1, botones[ff][cc])
+            );
+            botones[ff][cc].setText("");
         }
-        actualizarMensajeBarco();
+
+        index++;
+
+        if (index >= barcos.length) {
+            JOptionPane.showMessageDialog(this,
+                    "Todos los barcos colocados. Presiona JUGAR.");
+        }
     }
 
-    /* ===================== VERIFICAR COLOCACIÓN ===================== */
-    private boolean puedeColocar(int row, int col, int size, boolean horizontal) {
-        if (horizontal) {
-            if (col + size > cols) return false;
-            for (int i = 0; i < size; i++)
-                if (shipTypes[row][col + i] != null) return false;
-        } else {
-            if (row + size > rows) return false;
-            for (int i = 0; i < size; i++)
-                if (shipTypes[row + i][col] != null) return false;
-        }
-        return true;
-    }
-
-    /* ===================== RANDOM ===================== */
     public void colocarRandom() {
-        limpiarTablero();
-        Random rand = new Random();
+        tablero.generarRandom();
+        redibujarDesdeLogica();
+        index = barcos.length;
+    }
 
-        for (Barco b : barcos) {
-            boolean colocado = false;
-            while (!colocado) {
-                int r = rand.nextInt(rows);
-                int c = rand.nextInt(cols);
-                boolean hor = rand.nextBoolean();
-                if (puedeColocar(r, c, b.tamaño, hor)) {
-                    for (int i = 0; i < b.tamaño; i++) {
-                        int row = r + (hor ? 0 : i);
-                        int col = c + (hor ? i : 0);
-                        shipTypes[row][col] = b.prefijo + (i + 1);
-                        try {
-                            ImageIcon icon = new ImageIcon(getClass().getResource("/Imagenes/barcos/"
-                                    + b.prefijo + (i + 1) + ".png"));
-                            Image img = icon.getImage().getScaledInstance(
-                                    gridButtons[row][col].getWidth(),
-                                    gridButtons[row][col].getHeight(),
-                                    Image.SCALE_SMOOTH
-                            );
-                            gridButtons[row][col].setIcon(new ImageIcon(img));
-                            gridButtons[row][col].setText("");
-                        } catch (Exception e) {
-                            gridButtons[row][col].setText(b.prefijo + (i + 1));
-                        }
+    private void redibujarDesdeLogica() {
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++) {
+                botones[i][j].setIcon(null);
+                botones[i][j].setText("~");
+            }
+
+        for (Barco b : tablero.barcos) {
+            int parte = 1;
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                    if (b.prefijo.equals(tablero.matriz[i][j])) {
+                        botones[i][j].setIcon(
+                                escalarImagen(b.prefijo, parte++, botones[i][j])
+                        );
+                        botones[i][j].setText("");
                     }
-                    colocado = true;
-                }
-            }
-        }
-
-        barcoIndex = barcos.length;
-        barcoActual = null;
-        actualizarMensajeBarco();
-    }
-
-    /* ===================== LIMPIAR ===================== */
-    private void limpiarTablero() {
-        for (int i = 0; i < rows; i++)
-            for (int j = 0; j < cols; j++) {
-                shipTypes[i][j] = null;
-                gridButtons[i][j].setIcon(null);
-                gridButtons[i][j].setText("");
-            }
-        barcoIndex = 0;
-        barcoActual = barcos[0];
-    }
-
-    /* ===================== MENSAJE BARCO ===================== */
-    private void actualizarMensajeBarco() {
-        if (barcoActual != null) {
-            String mensaje = "Coloca tu barco: " + barcoActual.codigo +
-                    " (" + barcoActual.tamaño + " casillas)";
-            JOptionPane.showMessageDialog(this, mensaje);
         }
     }
 
-    public String[][] getShipTypes() {
-        return shipTypes;
+    private ImageIcon escalarImagen(String prefijo, int parte, JButton btn) {
+        ImageIcon icon = new ImageIcon(
+                getClass().getResource(
+                        "/Imagenes/" + prefijo + parte + ".png"
+                )
+        );
+
+        Image img = icon.getImage().getScaledInstance(
+                btn.getWidth(),
+                btn.getHeight(),
+                Image.SCALE_SMOOTH
+        );
+
+        return new ImageIcon(img);
     }
 }
-
 
