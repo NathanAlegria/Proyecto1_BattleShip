@@ -20,9 +20,6 @@ public class Battleship {
 
     private static Battleship instancia;
 
-    private String[][] tableroJugador;
-    private String[][] tableroOponente;
-
     private Battleship() {
         jugadores = new Player[20];
         totalJugadores = 0;
@@ -30,29 +27,13 @@ public class Battleship {
     }
 
     public static Battleship getInstance() {
-        if (instancia == null) {
-            instancia = new Battleship();
-        }
+        if (instancia == null) instancia = new Battleship();
         return instancia;
     }
 
+    /* =================== HISTORIAL GLOBAL (opcional) =================== */
     private String[] historial = new String[10];
     private int partidas = 0;
-
-    public void registrarPartida(String a, String b, String ganador, String motivo) {
-        String txt = "Partida " + a + " vs " + b
-                + " | Ganador: " + ganador
-                + " (" + motivo + ")";
-
-        for (int i = historial.length - 1; i > 0; i--) {
-            historial[i] = historial[i - 1];
-        }
-        historial[0] = txt;
-
-        if (partidas < 10) {
-            partidas++;
-        }
-    }
 
     public String[] getHistorial() {
         String[] h = new String[partidas];
@@ -60,14 +41,44 @@ public class Battleship {
         return h;
     }
 
+    private void pushHistorial(String txt) {
+        for (int i = historial.length - 1; i > 0; i--) {
+            historial[i] = historial[i - 1];
+        }
+        historial[0] = txt;
+        if (partidas < 10) partidas++;
+    }
+
+    /* =================== RESULTADO PARTIDA (PDF) =================== */
+    public void registrarResultadoPartida(Player ganador, Player perdedor, boolean fueRetiro) {
+        if (ganador == null || perdedor == null) return;
+
+        // ganador recibe 3 ptos
+        ganador.sumarPuntos(3);
+
+        String txt;
+        if (fueRetiro) {
+            // estilo requerido (retiro)
+            txt = ganador.getUsername() + " ganó porque " + perdedor.getUsername() + " huyó (retiro).";
+        } else {
+            // estilo requerido (hundió todos)
+            txt = ganador.getUsername() + " hundió todos los barcos de " + perdedor.getUsername()
+                    + " en modo " + dificultad + ".";
+        }
+
+        // logs por jugador (últimos 10, más reciente primero)
+        ganador.addLog(txt);
+        perdedor.addLog(txt);
+
+        // historial global (si lo quieres usar)
+        pushHistorial("Partida " + ganador.getUsername() + " vs " + perdedor.getUsername()
+                + " | Ganador: " + ganador.getUsername() + (fueRetiro ? " (RETIRO)" : " (HUNDIÓ TODO)"));
+    }
+
     /* =================== JUGADORES =================== */
     public boolean registrarJugador(String user, char[] pass) {
-        if (user == null || user.trim().isEmpty()) {
-            return false;
-        }
-        if (buscarJugador(user) != null) {
-            return false;
-        }
+        if (user == null || user.trim().isEmpty()) return false;
+        if (buscarJugador(user) != null) return false;
 
         if (totalJugadores < jugadores.length) {
             jugadores[totalJugadores++] = new Player(user, pass);
@@ -78,9 +89,7 @@ public class Battleship {
 
     public Player buscarJugador(String user) {
         for (int i = 0; i < totalJugadores; i++) {
-            if (jugadores[i].getUsername().equals(user)) {
-                return jugadores[i];
-            }
+            if (jugadores[i].getUsername().equals(user)) return jugadores[i];
         }
         return null;
     }
@@ -90,17 +99,9 @@ public class Battleship {
         return p != null && p.verificarContrasena(pass);
     }
 
-    public void setJugadorActual(Player p) {
-        jugadorActual = p;
-    }
-
-    public Player getJugadorActual() {
-        return jugadorActual;
-    }
-
-    public void cerrarSesion() {
-        jugadorActual = null;
-    }
+    public void setJugadorActual(Player p) { jugadorActual = p; }
+    public Player getJugadorActual() { return jugadorActual; }
+    public void cerrarSesion() { jugadorActual = null; }
 
     public boolean eliminarJugador(Player jugador) {
         for (int i = 0; i < totalJugadores; i++) {
@@ -116,36 +117,20 @@ public class Battleship {
     }
 
     /* =================== CONFIGURACIÓN =================== */
-    public String getDificultad() {
-        return dificultad;
-    }
+    public String getDificultad() { return dificultad; }
+    public void setDificultad(String dificultad) { this.dificultad = dificultad; }
 
-    public void setDificultad(String dificultad) {
-        this.dificultad = dificultad;
-    }
+    public String getModoJuego() { return modoJuego; }
+    public void setModoJuego(String modoJuego) { this.modoJuego = modoJuego; }
 
-    public String getModoJuego() {
-        return modoJuego;
-    }
-
-    public void setModoJuego(String modoJuego) {
-        this.modoJuego = modoJuego;
-    }
-
-    public boolean esTutorial() {
-        return modoJuego.equals("TUTORIAL");
-    }
+    public boolean esTutorial() { return modoJuego.equals("TUTORIAL"); }
 
     public int barcosPorDificultad() {
         switch (dificultad) {
-            case "EASY":
-                return 5;
-            case "EXPERT":
-                return 2;
-            case "GENIUS":
-                return 1;
-            default:
-                return 4; // NORMAL
+            case "EASY": return 5;
+            case "EXPERT": return 2;
+            case "GENIUS": return 1;
+            default: return 4; // NORMAL
         }
     }
 
@@ -165,29 +150,5 @@ public class Battleship {
         }
         return ranking;
     }
-
-    /* =================== TABLEROS =================== */
-    public void setTableroJugador(String[][] tablero) {
-        tableroJugador = copiar(tablero);
-    }
-
-    public String[][] getTableroJugador() {
-        return tableroJugador;
-    }
-
-    public void setTableroOponente(String[][] tablero) {
-        tableroOponente = copiar(tablero);
-    }
-
-    public String[][] getTableroOponente() {
-        return tableroOponente;
-    }
-
-    private String[][] copiar(String[][] t) {
-        String[][] copia = new String[t.length][t[0].length];
-        for (int i = 0; i < t.length; i++) {
-            System.arraycopy(t[i], 0, copia[i], 0, t[i].length);
-        }
-        return copia;
-    }
 }
+

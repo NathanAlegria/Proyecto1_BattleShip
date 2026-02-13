@@ -23,9 +23,21 @@ public class Menu_Principal extends JFrame {
 
     private Image backgroundImage, buttonImage, buttonHoverImage;
 
+    // ✅ refs para refrescar datos y logs
+    private JLabel lblUserData;
+    private JLabel lblPuntosData;
+    private JLabel lblDificultadData;
+    private JLabel lblModoData;
+
+    private DefaultListModel<String> logsModel;
+    private JList<String> logsList;
+
+    // ✅ refs para refrescar ranking
+    private DefaultTableModel rankingModel;
+    private JTable rankingTable;
+
     //Panel de Fondo
     private class BackgroundPanel extends JPanel {
-
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -50,29 +62,19 @@ public class Menu_Principal extends JFrame {
             setPreferredSize(new Dimension(300, 50));
 
             addMouseListener(new MouseAdapter() {
-                public void mouseEntered(MouseEvent e) {
-                    hovered = true;
-                    repaint();
-                }
-
-                public void mouseExited(MouseEvent e) {
-                    hovered = false;
-                    repaint();
-                }
+                public void mouseEntered(MouseEvent e) { hovered = true; repaint(); }
+                public void mouseExited(MouseEvent e) { hovered = false; repaint(); }
             });
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             Image img = hovered ? buttonHoverImage : buttonImage;
-            if (img != null) {
-                g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
-            }
+            if (img != null) g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
             super.paintComponent(g);
         }
     }
 
-    //Constructor
     public Menu_Principal(Battleship sistema, Menu menu, Player jugador) {
         this.sistema = sistema;
         this.menuReferencia = menu;
@@ -99,7 +101,6 @@ public class Menu_Principal extends JFrame {
         cardPanel = new JPanel(cards);
         cardPanel.setOpaque(false);
 
-        // MENÚS
         cardPanel.add(menuPrincipal(), "MAIN");
         cardPanel.add(panelConfiguracion(), "CONFIG");
         cardPanel.add(panelReportes(), "REPORTS");
@@ -113,7 +114,15 @@ public class Menu_Principal extends JFrame {
         setContentPane(fondo);
     }
 
-    //Menu Principal con Botones
+    // ✅ Se llama desde Tablero al finalizar
+    public void volverAMenuPrincipal() {
+        refrescarDatosUI();
+        refrescarLogsUI();
+        refrescarRankingUI();
+        cards.show(cardPanel, "MAIN");
+        setVisible(true);
+    }
+
     private JPanel menuPrincipal() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
@@ -160,7 +169,6 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    //SubPanel de Perfil
     private JPanel panelPerfil() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
@@ -177,7 +185,10 @@ public class Menu_Principal extends JFrame {
 
         c.gridy = 1;
         ThemedButton datos = new ThemedButton("VER MIS DATOS");
-        datos.addActionListener(e -> cards.show(cardPanel, "PROFILE_VIEW"));
+        datos.addActionListener(e -> {
+            refrescarDatosUI();
+            cards.show(cardPanel, "PROFILE_VIEW");
+        });
         p.add(datos, c);
 
         c.gridy = 2;
@@ -198,13 +209,12 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    //SubMenu de Datos
     private JPanel panelVerMisDatos() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
 
         JPanel infoPanel = new JPanel(new GridBagLayout());
-        infoPanel.setBackground(new Color(0, 0, 0, 150)); // Fondo semitransparente
+        infoPanel.setBackground(new Color(0, 0, 0, 150));
         infoPanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
 
         GridBagConstraints c = new GridBagConstraints();
@@ -217,27 +227,27 @@ public class Menu_Principal extends JFrame {
         c.gridy = 0;
         infoPanel.add(title, c);
 
-        JLabel user = new JLabel("USUARIO: " + jugadorActual.getUsername());
-        user.setFont(new Font("Arial", Font.BOLD, 18));
-        user.setForeground(Color.WHITE);
+        lblUserData = new JLabel();
+        lblUserData.setFont(new Font("Arial", Font.BOLD, 18));
+        lblUserData.setForeground(Color.WHITE);
         c.gridy = 1;
-        infoPanel.add(user, c);
+        infoPanel.add(lblUserData, c);
 
-        JLabel puntos = new JLabel("PUNTOS: " + jugadorActual.getPuntos());
-        puntos.setFont(new Font("Arial", Font.BOLD, 18));
-        puntos.setForeground(Color.WHITE);
+        lblPuntosData = new JLabel();
+        lblPuntosData.setFont(new Font("Arial", Font.BOLD, 18));
+        lblPuntosData.setForeground(Color.WHITE);
         c.gridy = 2;
-        infoPanel.add(puntos, c);
+        infoPanel.add(lblPuntosData, c);
 
-        JLabel dificultad = new JLabel("DIFICULTAD: " + sistema.getDificultad());
-        dificultad.setForeground(Color.WHITE);
+        lblDificultadData = new JLabel();
+        lblDificultadData.setForeground(Color.WHITE);
         c.gridy = 3;
-        infoPanel.add(dificultad, c);
+        infoPanel.add(lblDificultadData, c);
 
-        JLabel modo = new JLabel("MODO DE JUEGO: " + sistema.getModoJuego());
-        modo.setForeground(Color.WHITE);
+        lblModoData = new JLabel();
+        lblModoData.setForeground(Color.WHITE);
         c.gridy = 4;
-        infoPanel.add(modo, c);
+        infoPanel.add(lblModoData, c);
 
         ThemedButton back = new ThemedButton("VOLVER");
         back.addActionListener(e -> cards.show(cardPanel, "PROFILE"));
@@ -245,16 +255,17 @@ public class Menu_Principal extends JFrame {
         infoPanel.add(back, c);
 
         p.add(infoPanel);
+
+        refrescarDatosUI();
         return p;
     }
 
-    //SubMenu de Modificar Datos
     private JPanel panelEditarMisDatos() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
 
         JPanel infoPanel = new JPanel(new GridBagLayout());
-        infoPanel.setBackground(new Color(0, 0, 0, 150)); // Fondo semitransparente
+        infoPanel.setBackground(new Color(0, 0, 0, 150));
         infoPanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
 
         GridBagConstraints c = new GridBagConstraints();
@@ -282,6 +293,7 @@ public class Menu_Principal extends JFrame {
         JLabel labelPassword = new JLabel("Nuevo Password");
         labelPassword.setForeground(Color.WHITE);
         infoPanel.add(labelPassword, c);
+
         c.gridy = 4;
         infoPanel.add(txtPass, c);
 
@@ -298,7 +310,7 @@ public class Menu_Principal extends JFrame {
             if (!passwordValida(nuevaPass)) {
                 JOptionPane.showMessageDialog(this,
                         "La contraseña debe tener mínimo 5 caracteres,\n"
-                        + "una letra mayúscula, un número y un símbolo.");
+                                + "una letra mayúscula, un número y un símbolo.");
                 return;
             }
 
@@ -306,6 +318,8 @@ public class Menu_Principal extends JFrame {
             jugadorActual.setPassword(new String(nuevaPass));
             lblUsuario.setText("COMANDANTE: " + jugadorActual.getUsername());
 
+            refrescarDatosUI();
+            refrescarRankingUI();
             cards.show(cardPanel, "PROFILE");
         });
 
@@ -321,7 +335,6 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    //Opcion Eliminar Cuenta
     private void eliminarCuenta() {
         int op = JOptionPane.showConfirmDialog(this,
                 "¿Está seguro de eliminar su cuenta?",
@@ -336,7 +349,6 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    //Sub Panel de Configuracion de Juego
     private JPanel panelConfiguracion() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
@@ -369,7 +381,6 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    //Sub Panel de Reportes
     private JPanel panelReportes() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
@@ -386,12 +397,18 @@ public class Menu_Principal extends JFrame {
 
         c.gridy = 1;
         ThemedButton logs = new ThemedButton("ÚLTIMOS 10 JUEGOS");
-        logs.addActionListener(e -> cards.show(cardPanel, "LOGS"));
+        logs.addActionListener(e -> {
+            refrescarLogsUI();
+            cards.show(cardPanel, "LOGS");
+        });
         p.add(logs, c);
 
         c.gridy = 2;
         ThemedButton rank = new ThemedButton("RANKING DE JUGADORES");
-        rank.addActionListener(e -> cards.show(cardPanel, "RANK"));
+        rank.addActionListener(e -> {
+            refrescarRankingUI();
+            cards.show(cardPanel, "RANK");
+        });
         p.add(rank, c);
 
         c.gridy = 3;
@@ -402,7 +419,6 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    //Sub Panel de Ultimos 10 Juegos Jugados
     private JPanel panelUltimosJuegos() {
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
@@ -412,28 +428,20 @@ public class Menu_Principal extends JFrame {
         title.setForeground(Color.CYAN);
         p.add(title, BorderLayout.NORTH);
 
-        DefaultListModel<String> model = new DefaultListModel<>();
-        String[] logs = jugadorActual.getLogs();
-
-        for (String log : logs) {
-            if (log != null) {
-                model.addElement(log);
-            }
-        }
-
-        JList<String> list = new JList<>(model);
-        list.setFont(new Font("Arial", Font.PLAIN, 16));
-        p.add(new JScrollPane(list), BorderLayout.CENTER);
+        logsModel = new DefaultListModel<>();
+        logsList = new JList<>(logsModel);
+        logsList.setFont(new Font("Arial", Font.PLAIN, 16));
+        p.add(new JScrollPane(logsList), BorderLayout.CENTER);
 
         ThemedButton back = new ThemedButton("VOLVER");
         back.addActionListener(e -> cards.show(cardPanel, "REPORTS"));
         p.add(back, BorderLayout.SOUTH);
 
+        refrescarLogsUI();
         return p;
     }
 
-
-    /* ===================== PANEL RANKING ===================== */
+    /* ===================== PANEL RANKING (con refresh) ===================== */
     private JPanel panelRanking() {
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
@@ -443,41 +451,85 @@ public class Menu_Principal extends JFrame {
         title.setForeground(Color.CYAN);
         p.add(title, BorderLayout.NORTH);
 
-        Player[] ranking = sistema.getRanking();
+        rankingModel = new DefaultTableModel(new String[]{"#", "Jugador", "Puntos"}, 0) {
+            @Override public boolean isCellEditable(int row, int col) { return false; }
+        };
 
-        DefaultTableModel model = new DefaultTableModel(
-                new String[]{"#", "Jugador", "Puntos"}, 0
-        );
-
-        for (int i = 0; i < ranking.length && ranking[i] != null; i++) {
-            model.addRow(new Object[]{
-                i + 1,
-                ranking[i].getUsername(),
-                ranking[i].getPuntos()
-            });
-        }
-
-        JTable table = new JTable(model);
-        table.setRowHeight(25);
-        p.add(new JScrollPane(table), BorderLayout.CENTER);
+        rankingTable = new JTable(rankingModel);
+        rankingTable.setRowHeight(25);
+        p.add(new JScrollPane(rankingTable), BorderLayout.CENTER);
 
         ThemedButton back = new ThemedButton("VOLVER");
         back.addActionListener(e -> cards.show(cardPanel, "REPORTS"));
         p.add(back, BorderLayout.SOUTH);
 
+        refrescarRankingUI();
         return p;
     }
 
-    //Opcion Seleccionar Oponente
-    private void seleccionarOponente() {
+    // ✅ REFRESCA DATOS (puntos, user, config)
+    private void refrescarDatosUI() {
+        if (lblUsuario != null) {
+            lblUsuario.setText("COMANDANTE: " + jugadorActual.getUsername());
+        }
+        if (lblUserData != null) {
+            lblUserData.setText("USUARIO: " + jugadorActual.getUsername());
+        }
+        if (lblPuntosData != null) {
+            lblPuntosData.setText("PUNTOS: " + jugadorActual.getPuntos());
+        }
+        if (lblDificultadData != null) {
+            lblDificultadData.setText("DIFICULTAD: " + sistema.getDificultad());
+        }
+        if (lblModoData != null) {
+            lblModoData.setText("MODO DE JUEGO: " + sistema.getModoJuego());
+        }
+    }
 
+    // ✅ LOGS con numeración 1-10 (1 = más reciente)
+    private void refrescarLogsUI() {
+        if (logsModel == null) return;
+
+        logsModel.clear();
+        String[] logs = jugadorActual.getLogs();
+
+        int n = 1;
+        for (String log : logs) {
+            if (log != null) {
+                logsModel.addElement(n + ". " + log);
+                n++;
+            }
+        }
+    }
+
+    // ✅ REFRESCA RANKING para que se vean puntos nuevos
+    private void refrescarRankingUI() {
+        if (rankingModel == null) return;
+
+        rankingModel.setRowCount(0);
+
+        Player[] ranking = sistema.getRanking();
+        for (int i = 0; i < ranking.length && ranking[i] != null; i++) {
+            rankingModel.addRow(new Object[]{
+                    i + 1,
+                    ranking[i].getUsername(),
+                    ranking[i].getPuntos()
+            });
+        }
+
+        if (rankingTable != null) {
+            rankingTable.revalidate();
+            rankingTable.repaint();
+        }
+    }
+
+    // ===================== JUGAR (tu misma lógica) =====================
+    private void seleccionarOponente() {
         Player[] jugadores = sistema.getRanking();
         int count = 0;
 
         for (Player p : jugadores) {
-            if (p != null && !p.getUsername().equals(jugadorActual.getUsername())) {
-                count++;
-            }
+            if (p != null && !p.getUsername().equals(jugadorActual.getUsername())) count++;
         }
 
         if (count == 0) {
@@ -494,26 +546,20 @@ public class Menu_Principal extends JFrame {
         }
 
         String rival = (String) JOptionPane.showInputDialog(
-                this,
-                "Seleccione oponente",
-                "Radar de Batalla",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                opciones,
-                opciones[0]
+                this, "Seleccione oponente", "Radar de Batalla",
+                JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]
         );
+        if (rival == null) return;
 
-        if (rival == null) {
+        Player rivalPlayer = sistema.buscarJugador(rival);
+        if (rivalPlayer == null) {
+            JOptionPane.showMessageDialog(this, "Rival no registrado.");
             return;
         }
 
-        /* ================== ORDEN DE BARCOS ================== */
         Tablero_Logico tableroJugador = new Tablero_Logico();
 
-        JFrame setupFrame = new JFrame(
-                "Coloca tus barcos - Jugador: " + jugadorActual.getUsername()
-        );
-
+        JFrame setupFrame = new JFrame("Coloca tus barcos - Jugador: " + jugadorActual.getUsername());
         Orden setupPanel = new Orden(tableroJugador);
         setupFrame.add(setupPanel, BorderLayout.CENTER);
 
@@ -527,25 +573,32 @@ public class Menu_Principal extends JFrame {
         startGame.addActionListener(e -> {
             setupFrame.dispose();
 
-            /* ================== TABLEROS DE BATALLA ================== */
             Tablero_Logico tableroEnemigo = new Tablero_Logico();
-            tableroEnemigo.barcos = tableroJugador.barcos; // mismos tipos
-            tableroEnemigo.generarRandom();
+            tableroEnemigo.barcos.clear();
+            for (Barco b : tableroJugador.barcos) {
+                tableroEnemigo.barcos.add(new Barco(b.codigo, b.prefijo, b.tamaño));
+            }
+            tableroEnemigo.regenerarPosiciones();
 
-            JFrame ventanaJuego = new JFrame(
-                    "Battleship - " + jugadorActual.getUsername() + " vs " + rival
-            );
-            ventanaJuego.setSize(900, 750);
+            JFrame ventanaJuego = new JFrame("Battleship - " + jugadorActual.getUsername() + " vs " + rival);
+            ventanaJuego.setSize(1200, 800);
             ventanaJuego.setLocationRelativeTo(null);
             ventanaJuego.setResizable(false);
             ventanaJuego.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+            setVisible(false);
+
             Tablero batalla = new Tablero(
+                    sistema,
+                    jugadorActual,
+                    rivalPlayer,
                     jugadorActual.getUsername(),
                     rival,
                     tableroJugador,
                     tableroEnemigo,
-                    sistema.esTutorial()
+                    sistema.esTutorial(),
+                    ventanaJuego,
+                    this
             );
 
             ventanaJuego.add(batalla);
@@ -562,24 +615,14 @@ public class Menu_Principal extends JFrame {
     }
 
     private boolean passwordValida(char[] pass) {
-        if (pass.length < 5) {
-            return false;
-        }
+        if (pass.length < 5) return false;
 
-        boolean mayus = false;
-        boolean numero = false;
-        boolean simbolo = false;
-
+        boolean mayus = false, numero = false, simbolo = false;
         for (char c : pass) {
-            if (Character.isUpperCase(c)) {
-                mayus = true;
-            } else if (Character.isDigit(c)) {
-                numero = true;
-            } else if (!Character.isLetterOrDigit(c)) {
-                simbolo = true;
-            }
+            if (Character.isUpperCase(c)) mayus = true;
+            else if (Character.isDigit(c)) numero = true;
+            else if (!Character.isLetterOrDigit(c)) simbolo = true;
         }
-
         return mayus && numero && simbolo;
     }
 
@@ -587,19 +630,13 @@ public class Menu_Principal extends JFrame {
         String[] opciones = {"TUTORIAL", "ARCADE"};
 
         String sel = (String) JOptionPane.showInputDialog(
-                this,
-                "Seleccione el modo de juego",
-                "Modo de Juego",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                opciones,
-                sistema.getModoJuego()
+                this, "Seleccione el modo de juego", "Modo de Juego",
+                JOptionPane.QUESTION_MESSAGE, null, opciones, sistema.getModoJuego()
         );
 
         if (sel != null) {
             sistema.setModoJuego(sel);
-            JOptionPane.showMessageDialog(this,
-                    "Modo de juego cambiado a: " + sel);
+            JOptionPane.showMessageDialog(this, "Modo de juego cambiado a: " + sel);
         }
     }
 
@@ -607,20 +644,13 @@ public class Menu_Principal extends JFrame {
         String[] opciones = {"EASY", "NORMAL", "EXPERT", "GENIUS"};
 
         String sel = (String) JOptionPane.showInputDialog(
-                this,
-                "Seleccione dificultad",
-                "Dificultad",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                opciones,
-                sistema.getDificultad()
+                this, "Seleccione dificultad", "Dificultad",
+                JOptionPane.QUESTION_MESSAGE, null, opciones, sistema.getDificultad()
         );
 
         if (sel != null) {
             sistema.setDificultad(sel);
-            JOptionPane.showMessageDialog(this,
-                    "Dificultad cambiada a: " + sel);
+            JOptionPane.showMessageDialog(this, "Dificultad cambiada a: " + sel);
         }
     }
-
 }

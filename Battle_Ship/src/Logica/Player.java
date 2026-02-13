@@ -13,6 +13,8 @@ public class Player {
     private String username;
     private char[] password;
     private int puntos;
+
+    // últimos 10 juegos del jugador LOGGED IN
     private String[] logs;
     private int logCount;
 
@@ -24,20 +26,12 @@ public class Player {
         this.logCount = 0;
     }
 
-    /* ===================== GETTERS ===================== */
-    public String getUsername() {
-        return username;
-    }
+    public String getUsername() { return username; }
+    public int getPuntos() { return puntos; }
 
-    public int getPuntos() {
-        return puntos;
-    }
+    // devuelve el arreglo completo (con nulls)
+    public String[] getLogs() { return logs; }
 
-    public String[] getLogs() {
-        return logs;
-    }
-
-    /* ===================== SETTERS ===================== */
     public void setUsername(String username) {
         if (username != null && !username.trim().isEmpty()) {
             this.username = username;
@@ -50,38 +44,22 @@ public class Player {
         }
     }
 
-    /* ===================== PUNTOS ===================== */
-    public void addPuntos(int p) {
-        puntos += p;
-    }
+    public void addPuntos(int p) { puntos += p; }
+    public void sumarPuntos(int p) { addPuntos(p); }
 
-    // ✅ MÉTODO COMPATIBLE CON EL JUEGO
-    public void sumarPuntos(int p) {
-        addPuntos(p);
-    }
-
-    /* ===================== LOGS ===================== */
+    // Más reciente primero
     public void addLog(String mensaje) {
         for (int i = Math.min(logCount, 9); i > 0; i--) {
             logs[i] = logs[i - 1];
         }
         logs[0] = mensaje;
-
-        if (logCount < 10) {
-            logCount++;
-        }
+        if (logCount < 10) logCount++;
     }
 
-    /* ===================== SEGURIDAD ===================== */
     public boolean verificarContrasena(char[] pass) {
-        if (pass == null || password == null || pass.length != password.length) {
-            return false;
-        }
-
+        if (pass == null || password == null || pass.length != password.length) return false;
         for (int i = 0; i < pass.length; i++) {
-            if (pass[i] != password[i]) {
-                return false;
-            }
+            if (pass[i] != password[i]) return false;
         }
         return true;
     }
