@@ -38,6 +38,7 @@ public class Menu_Principal extends JFrame {
 
     //Panel de Fondo
     private class BackgroundPanel extends JPanel {
+
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -62,15 +63,24 @@ public class Menu_Principal extends JFrame {
             setPreferredSize(new Dimension(300, 50));
 
             addMouseListener(new MouseAdapter() {
-                public void mouseEntered(MouseEvent e) { hovered = true; repaint(); }
-                public void mouseExited(MouseEvent e) { hovered = false; repaint(); }
+                public void mouseEntered(MouseEvent e) {
+                    hovered = true;
+                    repaint();
+                }
+
+                public void mouseExited(MouseEvent e) {
+                    hovered = false;
+                    repaint();
+                }
             });
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             Image img = hovered ? buttonHoverImage : buttonImage;
-            if (img != null) g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+            if (img != null) {
+                g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+            }
             super.paintComponent(g);
         }
     }
@@ -310,7 +320,7 @@ public class Menu_Principal extends JFrame {
             if (!passwordValida(nuevaPass)) {
                 JOptionPane.showMessageDialog(this,
                         "La contraseña debe tener mínimo 5 caracteres,\n"
-                                + "una letra mayúscula, un número y un símbolo.");
+                        + "una letra mayúscula, un número y un símbolo.");
                 return;
             }
 
@@ -452,7 +462,10 @@ public class Menu_Principal extends JFrame {
         p.add(title, BorderLayout.NORTH);
 
         rankingModel = new DefaultTableModel(new String[]{"#", "Jugador", "Puntos"}, 0) {
-            @Override public boolean isCellEditable(int row, int col) { return false; }
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                return false;
+            }
         };
 
         rankingTable = new JTable(rankingModel);
@@ -488,7 +501,9 @@ public class Menu_Principal extends JFrame {
 
     // ✅ LOGS con numeración 1-10 (1 = más reciente)
     private void refrescarLogsUI() {
-        if (logsModel == null) return;
+        if (logsModel == null) {
+            return;
+        }
 
         logsModel.clear();
         String[] logs = jugadorActual.getLogs();
@@ -504,16 +519,18 @@ public class Menu_Principal extends JFrame {
 
     // ✅ REFRESCA RANKING para que se vean puntos nuevos
     private void refrescarRankingUI() {
-        if (rankingModel == null) return;
+        if (rankingModel == null) {
+            return;
+        }
 
         rankingModel.setRowCount(0);
 
         Player[] ranking = sistema.getRanking();
         for (int i = 0; i < ranking.length && ranking[i] != null; i++) {
             rankingModel.addRow(new Object[]{
-                    i + 1,
-                    ranking[i].getUsername(),
-                    ranking[i].getPuntos()
+                i + 1,
+                ranking[i].getUsername(),
+                ranking[i].getPuntos()
             });
         }
 
@@ -529,7 +546,9 @@ public class Menu_Principal extends JFrame {
         int count = 0;
 
         for (Player p : jugadores) {
-            if (p != null && !p.getUsername().equals(jugadorActual.getUsername())) count++;
+            if (p != null && !p.getUsername().equals(jugadorActual.getUsername())) {
+                count++;
+            }
         }
 
         if (count == 0) {
@@ -549,7 +568,9 @@ public class Menu_Principal extends JFrame {
                 this, "Seleccione oponente", "Radar de Batalla",
                 JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]
         );
-        if (rival == null) return;
+        if (rival == null) {
+            return;
+        }
 
         Player rivalPlayer = sistema.buscarJugador(rival);
         if (rivalPlayer == null) {
@@ -560,7 +581,10 @@ public class Menu_Principal extends JFrame {
         Tablero_Logico tableroJugador = new Tablero_Logico();
 
         JFrame setupFrame = new JFrame("Coloca tus barcos - Jugador: " + jugadorActual.getUsername());
-        Orden setupPanel = new Orden(tableroJugador);
+
+        // ✅ Dificultad aplicada
+        Orden setupPanel = new Orden(tableroJugador, sistema.getDificultad());
+
         setupFrame.add(setupPanel, BorderLayout.CENTER);
 
         JPanel bottom = new JPanel();
@@ -574,10 +598,14 @@ public class Menu_Principal extends JFrame {
             setupFrame.dispose();
 
             Tablero_Logico tableroEnemigo = new Tablero_Logico();
+
+            // ✅ Copiar barcos (incluye repetido si EASY)
             tableroEnemigo.barcos.clear();
             for (Barco b : tableroJugador.barcos) {
                 tableroEnemigo.barcos.add(new Barco(b.codigo, b.prefijo, b.tamaño));
             }
+
+            // ✅ colocar enemigo random
             tableroEnemigo.regenerarPosiciones();
 
             JFrame ventanaJuego = new JFrame("Battleship - " + jugadorActual.getUsername() + " vs " + rival);
@@ -615,13 +643,19 @@ public class Menu_Principal extends JFrame {
     }
 
     private boolean passwordValida(char[] pass) {
-        if (pass.length < 5) return false;
+        if (pass.length < 5) {
+            return false;
+        }
 
         boolean mayus = false, numero = false, simbolo = false;
         for (char c : pass) {
-            if (Character.isUpperCase(c)) mayus = true;
-            else if (Character.isDigit(c)) numero = true;
-            else if (!Character.isLetterOrDigit(c)) simbolo = true;
+            if (Character.isUpperCase(c)) {
+                mayus = true;
+            } else if (Character.isDigit(c)) {
+                numero = true;
+            } else if (!Character.isLetterOrDigit(c)) {
+                simbolo = true;
+            }
         }
         return mayus && numero && simbolo;
     }
@@ -637,6 +671,9 @@ public class Menu_Principal extends JFrame {
         if (sel != null) {
             sistema.setModoJuego(sel);
             JOptionPane.showMessageDialog(this, "Modo de juego cambiado a: " + sel);
+
+            refrescarDatosUI();
+            cards.show(cardPanel, "MAIN"); // ✅ vuelve automático
         }
     }
 
@@ -651,6 +688,10 @@ public class Menu_Principal extends JFrame {
         if (sel != null) {
             sistema.setDificultad(sel);
             JOptionPane.showMessageDialog(this, "Dificultad cambiada a: " + sel);
+
+            refrescarDatosUI();
+            cards.show(cardPanel, "MAIN"); // ✅ vuelve automático
         }
     }
+
 }

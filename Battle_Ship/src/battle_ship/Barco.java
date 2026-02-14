@@ -11,9 +11,9 @@ package battle_ship;
 public class Barco {
 
     public String codigo;   // PA, AZ, SM, DT
-    public String prefijo;  // P, A, S, D  (para matriz/imágenes)
-    public int tamaño;      // 5,4,3,2
-    public int vidas;       // inicia = tamaño
+    public String prefijo;  // P, A, S, D (para matriz e imagen)
+    public int tamaño;
+    public int vidas;
 
     public Barco(String codigo, String prefijo, int tamaño) {
         this.codigo = codigo;
@@ -29,9 +29,6 @@ public class Barco {
     public boolean estaHundido() {
         return vidas <= 0;
     }
-
-    public int getVida() {
-        return vidas;
-    }
 }
+
 
