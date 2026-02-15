@@ -35,7 +35,6 @@ public class Tablero extends JPanel {
     private final JTextField filaInput = new JTextField(3);
     private final JTextField colInput = new JTextField(3);
 
-    // ✅ barras SIN maps: arreglos paralelos
     private JProgressBar[] barrasJ1;
     private JProgressBar[] barrasJ2;
 
@@ -84,7 +83,8 @@ public class Tablero extends JPanel {
         construirBarras();
         actualizarTurno();
 
-        redibujarTablero(tableroJugador, logicaJugador, modoTutorial);
+        // Mis barcos siempre visibles; enemigo solo en tutorial
+        redibujarTablero(tableroJugador, logicaJugador, true);
         redibujarTablero(tableroEnemigo, logicaEnemigo, modoTutorial);
     }
 
@@ -109,9 +109,14 @@ public class Tablero extends JPanel {
         JPanel fila = new JPanel(new GridLayout(1, 4, 15, 0));
         fila.setOpaque(false);
 
-        panelVidasJ1 = new JPanel(new GridLayout(0, 1, 0, 6));
-        panelVidasJ1.setOpaque(false);
-        panelVidasJ1.setBorder(BorderFactory.createTitledBorder("Vidas " + nombreJugador));
+        panelVidasJ1 = new PanelTransparente(new Color(0, 0, 0, 140));
+        panelVidasJ1.setLayout(new GridLayout(0, 1, 0, 6));
+        javax.swing.border.TitledBorder b1 = BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.WHITE),
+                "Vidas " + nombreJugador
+        );
+        b1.setTitleColor(Color.WHITE);
+        panelVidasJ1.setBorder(b1);
 
         JPanel panelTableroJugador = crearPanelConCoordenadas(tableroJugador);
         panelTableroJugador.setOpaque(false);
@@ -119,9 +124,14 @@ public class Tablero extends JPanel {
         JPanel panelTableroEnemigo = crearPanelConCoordenadas(tableroEnemigo);
         panelTableroEnemigo.setOpaque(false);
 
-        panelVidasJ2 = new JPanel(new GridLayout(0, 1, 0, 6));
-        panelVidasJ2.setOpaque(false);
-        panelVidasJ2.setBorder(BorderFactory.createTitledBorder("Vidas " + nombreEnemigo));
+        panelVidasJ2 = new PanelTransparente(new Color(0, 0, 0, 140));
+        panelVidasJ2.setLayout(new GridLayout(0, 1, 0, 6));
+        javax.swing.border.TitledBorder b2 = BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.WHITE),
+                "Vidas " + nombreEnemigo
+        );
+        b2.setTitleColor(Color.WHITE);
+        panelVidasJ2.setBorder(b2);
 
         fila.add(panelVidasJ1);
         fila.add(panelTableroJugador);
@@ -150,6 +160,7 @@ public class Tablero extends JPanel {
                 b.setFocusPainted(false);
                 b.setHorizontalAlignment(SwingConstants.CENTER);
                 b.setVerticalAlignment(SwingConstants.CENTER);
+                b.setFont(new Font("Arial", Font.BOLD, 16));
                 botones[i][j] = b;
                 grid.add(b);
             }
@@ -194,10 +205,12 @@ public class Tablero extends JPanel {
 
         for (int i = 0; i < logicaJugador.barcos.size(); i++) {
             Barco b = logicaJugador.barcos.get(i);
-
-            // ✅ etiqueta diferenciada por ID (ej DT#2)
             String id = logicaJugador.idPorIndice(i);
-            panelVidasJ1.add(new JLabel(nombreBonito(b.codigo) + " [" + id + "]"));
+
+            JLabel lbl = new JLabel(nombreBonito(b.codigo) + " [" + id + "]");
+            lbl.setForeground(Color.WHITE);
+            lbl.setFont(new Font("Arial", Font.BOLD, 13));
+            panelVidasJ1.add(lbl);
 
             barrasJ1[i] = crearBarraVida(b);
             panelVidasJ1.add(barrasJ1[i]);
@@ -205,9 +218,12 @@ public class Tablero extends JPanel {
 
         for (int i = 0; i < logicaEnemigo.barcos.size(); i++) {
             Barco b = logicaEnemigo.barcos.get(i);
-
             String id = logicaEnemigo.idPorIndice(i);
-            panelVidasJ2.add(new JLabel(nombreBonito(b.codigo) + " [" + id + "]"));
+
+            JLabel lbl = new JLabel(nombreBonito(b.codigo) + " [" + id + "]");
+            lbl.setForeground(Color.WHITE);
+            lbl.setFont(new Font("Arial", Font.BOLD, 13));
+            panelVidasJ2.add(lbl);
 
             barrasJ2[i] = crearBarraVida(b);
             panelVidasJ2.add(barrasJ2[i]);
@@ -231,17 +247,14 @@ public class Tablero extends JPanel {
         int idx = indexOfBarcoRef(t, b);
         if (idx < 0 || idx >= barras.length) return;
 
-        JProgressBar pb = barras[idx];
-
         int pct = (int) Math.round((b.vidas * 100.0) / b.tamaño);
         if (pct < 0) pct = 0;
 
-        pb.setValue(pct);
-        if (b.estaHundido()) pb.setString("HUNDIDO (0/" + b.tamaño + ")");
-        else pb.setString(pct + "% (" + b.vidas + "/" + b.tamaño + ")");
+        barras[idx].setValue(pct);
+        if (b.estaHundido()) barras[idx].setString("HUNDIDO (0/" + b.tamaño + ")");
+        else barras[idx].setString(pct + "% (" + b.vidas + "/" + b.tamaño + ")");
     }
 
-    // ✅ busca por referencia (==), sin maps
     private int indexOfBarcoRef(Tablero_Logico t, Barco target) {
         for (int i = 0; i < t.barcos.size(); i++) {
             if (t.barcos.get(i) == target) return i;
@@ -259,7 +272,28 @@ public class Tablero extends JPanel {
         };
     }
 
+    private void limpiarFUI(JButton[][] botones) {
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if ("F".equals(botones[i][j].getText())) {
+                    botones[i][j].setIcon(null);
+                    botones[i][j].setText("~");
+                    botones[i][j].setForeground(Color.BLACK);
+                }
+            }
+        }
+    }
+
+    private void limpiarFAlSiguienteTurno() {
+        limpiarFUI(tableroJugador);
+        limpiarFUI(tableroEnemigo);
+    }
+
     private void atacarManual() {
+
+        // F desaparece cuando el siguiente jugador va a atacar
+        limpiarFAlSiguienteTurno();
+
         int f, c;
 
         try {
@@ -270,8 +304,8 @@ public class Tablero extends JPanel {
             return;
         }
 
-        // Retiro
-        if (f == -1 || c == -1) {
+        // Retiro solo si ambos son -1
+        if (f == -1 && c == -1) {
             int confirm = JOptionPane.showConfirmDialog(this, "¿Seguro que deseas retirarte?", "Retiro", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 Player perdedor = turnoDeJugador1 ? p1 : p2;
@@ -313,14 +347,19 @@ public class Tablero extends JPanel {
                                 int f, int c) {
 
         String atacante = atacantePlayer.getUsername();
-
         String hitId = t.atacar(f, c);
 
         if (hitId == null) {
             chat.append("❌ " + atacante + " falló [" + f + "," + c + "]\n");
+            botones[f][c].setIcon(null);
             botones[f][c].setText("F");
+            botones[f][c].setForeground(Color.RED);
             return;
         }
+
+        botones[f][c].setIcon(null);
+        botones[f][c].setText("X");
+        botones[f][c].setForeground(Color.BLACK);
 
         Barco barco = t.barcoDeId(hitId);
         if (barco == null) {
@@ -341,33 +380,18 @@ public class Tablero extends JPanel {
             return;
         }
 
-        // ✅ AQUÍ vuelve la lógica que querías:
-        // si pega, el tablero enemigo (o del jugador) se REGENERA / MEZCLA
         t.regenerarPosiciones();
 
-        // Redibujar (ARCADE no revela barcos)
-        limpiarTableroVisual(botones);
-        redibujarTablero(botones, t, modoTutorial);
+        boolean mostrar = (botones == tableroJugador);
+        if (!mostrar) mostrar = modoTutorial;
+        redibujarTablero(botones, t, mostrar);
     }
 
     private void finalizarJuego(Player ganador, Player perdedor, boolean fueRetiro) {
         sistema.registrarResultadoPartida(ganador, perdedor, fueRetiro);
-
         JOptionPane.showMessageDialog(this, "🏆 El jugador " + ganador.getUsername() + " fue el triunfador.");
-
         if (ventanaJuego != null) ventanaJuego.dispose();
         if (menuPrincipal != null) menuPrincipal.volverAMenuPrincipal();
-    }
-
-    private void limpiarTableroVisual(JButton[][] botones) {
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                botones[i][j].setIcon(null);
-                if (!"F".equals(botones[i][j].getText())) {
-                    botones[i][j].setText("~");
-                }
-            }
-        }
     }
 
     private void actualizarTurno() {
@@ -381,60 +405,106 @@ public class Tablero extends JPanel {
     }
 
     private void redibujarTablero(JButton[][] botones, Tablero_Logico t, boolean mostrarBarcos) {
+
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
-                botones[i][j].setIcon(null);
-                if (!"F".equals(botones[i][j].getText())) {
-                    botones[i][j].setText("~");
+
+                if (t.getEstado(i, j) == 2) {
+                    botones[i][j].setIcon(null);
+                    botones[i][j].setText("X");
+                    botones[i][j].setForeground(Color.BLACK);
+                    continue;
                 }
+
+                if ("F".equals(botones[i][j].getText())) {
+                    botones[i][j].setIcon(null);
+                    continue;
+                }
+
+                botones[i][j].setIcon(null);
+                botones[i][j].setText("~");
+                botones[i][j].setForeground(Color.BLACK);
             }
         }
 
         if (!mostrarBarcos) return;
 
-        // ✅ DIBUJA TODOS LOS BARCOS (incluyendo repetidos) POR ID
         for (int idx = 0; idx < t.barcos.size(); idx++) {
+
             Barco b = t.barcos.get(idx);
             if (b.estaHundido()) continue;
 
             String id = t.idPorIndice(idx);
 
-            // detectar orientación mirando un vecino del mismo id
-            boolean horizontal = true;
-            int baseR = -1, baseC = -1;
+            int[] rr = new int[b.tamaño];
+            int[] cc = new int[b.tamaño];
+            int count = 0;
 
-            for (int r = 0; r < SIZE && baseR == -1; r++) {
+            for (int r = 0; r < SIZE; r++) {
                 for (int c = 0; c < SIZE; c++) {
                     if (id.equals(t.matriz[r][c])) {
-                        baseR = r;
-                        baseC = c;
-                        break;
+                        if (count < b.tamaño) {
+                            rr[count] = r;
+                            cc[count] = c;
+                            count++;
+                        }
                     }
-                }
-            }
-            if (baseR != -1) {
-                if (baseR + 1 < SIZE && id.equals(t.matriz[baseR + 1][baseC])) {
-                    horizontal = false;
                 }
             }
 
-            int parte = 1;
-            for (int i = 0; i < SIZE; i++) {
-                for (int j = 0; j < SIZE; j++) {
-                    if (id.equals(t.matriz[i][j])) {
-                        botones[i][j].setIcon(escalarImagenSeguro(b.prefijo, parte++, botones[i][j], horizontal));
-                        botones[i][j].setText("");
+            if (count == 0) continue;
+
+            boolean horizontal = true;
+            if (count >= 2) {
+                if (cc[0] == cc[1]) horizontal = false;
+            }
+
+            for (int a = 0; a < count - 1; a++) {
+                for (int d = 0; d < count - a - 1; d++) {
+                    boolean swap = horizontal ? (cc[d] > cc[d + 1]) : (rr[d] > rr[d + 1]);
+                    if (swap) {
+                        int tr = rr[d]; rr[d] = rr[d + 1]; rr[d + 1] = tr;
+                        int tc = cc[d]; cc[d] = cc[d + 1]; cc[d + 1] = tc;
                     }
                 }
+            }
+
+            for (int k = 0; k < count; k++) {
+                int r = rr[k];
+                int c = cc[k];
+
+                if (t.getEstado(r, c) == 2) continue;
+                if ("F".equals(botones[r][c].getText())) continue;
+
+                ImageIcon icon = escalarImagenSeguro(b.prefijo, k + 1, botones[r][c], horizontal);
+                botones[r][c].setIcon(icon);
+                botones[r][c].setText(icon == null ? "~" : "");
             }
         }
     }
 
+    private java.net.URL buscarImagen(String archivo) {
+        String[] rutas = {
+                "/Imagenes/" + archivo,
+                "/imagenes/" + archivo,
+                "/battle_ship/Imagenes/" + archivo,
+                "/battle_ship/imagenes/" + archivo
+        };
+
+        for (int i = 0; i < rutas.length; i++) {
+            java.net.URL url = getClass().getResource(rutas[i]);
+            if (url != null) return url;
+        }
+        return null;
+    }
+
     private ImageIcon escalarImagenSeguro(String prefijo, int parte, JButton btn, boolean horizontal) {
-        String ruta = "/Imagenes/" + prefijo + parte + ".png";
-        java.net.URL url = getClass().getResource(ruta);
+
+        String archivo = prefijo + parte + ".png";
+        java.net.URL url = buscarImagen(archivo);
+
         if (url == null) {
-            System.out.println("No se encontró imagen: " + ruta);
+            System.out.println("No se encontró imagen: " + archivo);
             return null;
         }
 
@@ -464,6 +534,24 @@ public class Tablero extends JPanel {
         return rotated;
     }
 
+    private static class PanelTransparente extends JPanel {
+        private final Color bg;
+
+        public PanelTransparente(Color bg) {
+            this.bg = bg;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setColor(bg);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 18, 18);
+            g2.dispose();
+        }
+    }
+
     private static class FondoPanel extends JPanel {
         private Image fondo;
 
@@ -476,9 +564,7 @@ public class Tablero extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            if (fondo != null) {
-                g.drawImage(fondo, 0, 0, getWidth(), getHeight(), this);
-            }
+            if (fondo != null) g.drawImage(fondo, 0, 0, getWidth(), getHeight(), this);
         }
     }
 }

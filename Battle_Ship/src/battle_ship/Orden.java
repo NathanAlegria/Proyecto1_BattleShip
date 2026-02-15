@@ -13,6 +13,7 @@ import java.util.*;
  *
  * @author Nathan
  */
+
 public class Orden extends JPanel {
 
     private static final int SIZE = 8;
@@ -28,11 +29,8 @@ public class Orden extends JPanel {
     private final JLabel lblDificultad;
     private final JLabel lblRestantes;
 
-    // item combo -> Barco
     private final LinkedHashMap<String, Barco> opciones = new LinkedHashMap<>();
     private final Set<String> colocados = new HashSet<>();
-
-    // ✅ item -> ID único que se guarda en matriz (ej: S#1, S#2)
     private final HashMap<String, String> itemToId = new HashMap<>();
 
     public Orden(Tablero_Logico t) {
@@ -122,10 +120,7 @@ public class Orden extends JPanel {
                 lista.add(AZ);
                 lista.add(SM);
                 lista.add(DT);
-
-                Barco[] base = {PA, AZ, SM, DT};
-                Barco rep = base[new Random().nextInt(base.length)];
-                lista.add(new Barco(rep.codigo, rep.prefijo, rep.tamaño));
+                lista.add(new Barco("DT", "D", 2)); // EASY: repetido fijo 1 Destructor
                 break;
             }
             case "EXPERT": {
@@ -140,7 +135,7 @@ public class Orden extends JPanel {
                 lista.add(base[new Random().nextInt(base.length)]);
                 break;
             }
-            default: { // NORMAL
+            default: {
                 lista.add(PA);
                 lista.add(AZ);
                 lista.add(SM);
@@ -149,11 +144,9 @@ public class Orden extends JPanel {
             }
         }
 
-        // lógica
         tablero.barcos.clear();
         tablero.barcos.addAll(lista);
 
-        // opciones del combo + IDs únicos
         opciones.clear();
         itemToId.clear();
 
@@ -166,8 +159,7 @@ public class Orden extends JPanel {
             String item = (n == 1) ? b.codigo : (b.codigo + " (" + n + ")");
             opciones.put(item, b);
 
-            // ✅ ID único en matriz
-            String id = b.prefijo + "#" + n; // ej S#1, S#2
+            String id = b.prefijo + "#" + n;
             itemToId.put(item, id);
         }
     }
@@ -217,7 +209,6 @@ public class Orden extends JPanel {
             int ff = f + (horizontal ? 0 : i);
             int cc = c + (horizontal ? i : 0);
 
-            // ✅ guardamos ID único, no solo prefijo
             tablero.matriz[ff][cc] = id;
 
             botones[ff][cc].setIcon(escalarImagen(barco.prefijo, i + 1, horizontal));
@@ -249,8 +240,6 @@ public class Orden extends JPanel {
 
     private void colocarTodosRandomLocal() {
         Random rand = new Random();
-
-        // reconstruye IDs en el mismo orden del tablero.barcos
         HashMap<String, Integer> contador = new HashMap<>();
 
         for (Barco b : tablero.barcos) {
@@ -284,7 +273,6 @@ public class Orden extends JPanel {
             }
         }
 
-        // Para cada barco, dibujar SOLO sus celdas usando su ID único
         HashMap<String, Integer> contador = new HashMap<>();
 
         for (Barco b : tablero.barcos) {
@@ -326,10 +314,7 @@ public class Orden extends JPanel {
         String ruta = "/Imagenes/" + prefijo + parte + ".png";
         java.net.URL url = getClass().getResource(ruta);
 
-        if (url == null) {
-            System.out.println("No se encontró imagen: " + ruta);
-            return null;
-        }
+        if (url == null) return null;
 
         ImageIcon icon = new ImageIcon(url);
         Image img = icon.getImage().getScaledInstance(CELL_SIZE, CELL_SIZE, Image.SCALE_SMOOTH);
@@ -353,3 +338,4 @@ public class Orden extends JPanel {
         return rotated;
     }
 }
+
