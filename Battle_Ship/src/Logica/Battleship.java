@@ -43,11 +43,18 @@ public class Battleship implements ISistemaJuego {
     }
 
     private void pushHistorial(String txt) {
-        for (int i = historial.length - 1; i > 0; i--) {
-            historial[i] = historial[i - 1];
-        }
+        //Recursividad
+        desplazarHistorialRec(historial.length - 1);
+
         historial[0] = txt;
         if (partidas < 10) partidas++;
+    }
+
+    // Recursividad
+    private void desplazarHistorialRec(int pos) {
+        if (pos <= 0) return;                 // caso base
+        historial[pos] = historial[pos - 1];  // paso
+        desplazarHistorialRec(pos - 1);       // llamada recursiva
     }
 
     //Resultado Partidas

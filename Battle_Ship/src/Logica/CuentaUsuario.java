@@ -15,6 +15,7 @@ public abstract class CuentaUsuario {
 
     public CuentaUsuario(String username, char[] password) {
         this.username = username;
+        // Operador Terniario
         this.password = (password == null) ? new char[0] : password.clone();
     }
 
