@@ -8,15 +8,16 @@ package Logica;
  *
  * @author Nathan
  */
-public class Battleship {
+
+public class Battleship implements ISistemaJuego {
 
     private Player[] jugadores;
     private int totalJugadores;
     private Player jugadorActual;
 
-    // Configuracion
-    private String dificultad = "NORMAL"; // EASY | NORMAL | EXPERT | GENIUS
-    private String modoJuego = "TUTORIAL"; // TUTORIAL | ARCADE
+    //Enum
+    private Dificultad dificultad = Dificultad.NORMAL;
+    private ModoJuego modoJuego = ModoJuego.TUTORIAL;
 
     private static Battleship instancia;
 
@@ -31,7 +32,7 @@ public class Battleship {
         return instancia;
     }
 
-    //Historial Jugador
+    //Historial
     private String[] historial = new String[10];
     private int partidas = 0;
 
@@ -49,30 +50,26 @@ public class Battleship {
         if (partidas < 10) partidas++;
     }
 
-    //Resultado
+    //Resultado Partidas
     public void registrarResultadoPartida(Player ganador, Player perdedor, boolean fueRetiro) {
         if (ganador == null || perdedor == null) return;
 
-        // ganador recibe 3 ptos
         ganador.sumarPuntos(3);
 
         String txt;
         if (fueRetiro) {
-            // por retiro
             txt = ganador.getUsername() + " ganó porque " + perdedor.getUsername() + " huyó (retiro).";
         } else {
-            // por ganar
             txt = ganador.getUsername() + " hundió todos los barcos de " + perdedor.getUsername()
-                    + " en modo " + dificultad + ".";
+                    + " en modo " + getDificultad() + ".";
         }
 
-        // logs por jugador ultimos 10
         ganador.addLog(txt);
         perdedor.addLog(txt);
 
-        // historial 
         pushHistorial("Partida " + ganador.getUsername() + " vs " + perdedor.getUsername()
-                + " | Ganador: " + ganador.getUsername() + (fueRetiro ? " (RETIRO)" : " (HUNDIÓ TODO)"));
+                + " | Ganador: " + ganador.getUsername()
+                + (fueRetiro ? " (RETIRO)" : " (HUNDIÓ TODO)"));
     }
 
     //Jugadores
@@ -100,7 +97,9 @@ public class Battleship {
     }
 
     public void setJugadorActual(Player p) { jugadorActual = p; }
+
     public Player getJugadorActual() { return jugadorActual; }
+
     public void cerrarSesion() { jugadorActual = null; }
 
     public boolean eliminarJugador(Player jugador) {
@@ -117,20 +116,28 @@ public class Battleship {
     }
 
     //Configuracion
-    public String getDificultad() { return dificultad; }
-    public void setDificultad(String dificultad) { this.dificultad = dificultad; }
+    public String getDificultad() { return dificultad.name(); }
 
-    public String getModoJuego() { return modoJuego; }
-    public void setModoJuego(String modoJuego) { this.modoJuego = modoJuego; }
+    public void setDificultad(String dificultad) {
+        this.dificultad = Dificultad.fromString(dificultad);
+    }
 
-    public boolean esTutorial() { return modoJuego.equals("TUTORIAL"); }
+    public String getModoJuego() { return modoJuego.name(); }
+
+    public void setModoJuego(String modoJuego) {
+        this.modoJuego = ModoJuego.fromString(modoJuego);
+    }
+
+    public boolean esTutorial() {
+        return modoJuego == ModoJuego.TUTORIAL;
+    }
 
     public int barcosPorDificultad() {
         switch (dificultad) {
-            case "EASY": return 5;
-            case "EXPERT": return 2;
-            case "GENIUS": return 1;
-            default: return 4; // NORMAL
+            case EASY:   return 5;
+            case EXPERT: return 2;
+            case GENIUS: return 1;
+            default:     return 4; // NORMAL
         }
     }
 
