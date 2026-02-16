@@ -14,7 +14,7 @@ public class Battleship {
     private int totalJugadores;
     private Player jugadorActual;
 
-    // CONFIGURACIÓN
+    // Configuracion
     private String dificultad = "NORMAL"; // EASY | NORMAL | EXPERT | GENIUS
     private String modoJuego = "TUTORIAL"; // TUTORIAL | ARCADE
 
@@ -31,7 +31,7 @@ public class Battleship {
         return instancia;
     }
 
-    /* =================== HISTORIAL GLOBAL (opcional) =================== */
+    //Historial Jugador
     private String[] historial = new String[10];
     private int partidas = 0;
 
@@ -49,7 +49,7 @@ public class Battleship {
         if (partidas < 10) partidas++;
     }
 
-    /* =================== RESULTADO PARTIDA (PDF) =================== */
+    //Resultado
     public void registrarResultadoPartida(Player ganador, Player perdedor, boolean fueRetiro) {
         if (ganador == null || perdedor == null) return;
 
@@ -58,24 +58,24 @@ public class Battleship {
 
         String txt;
         if (fueRetiro) {
-            // estilo requerido (retiro)
+            // por retiro
             txt = ganador.getUsername() + " ganó porque " + perdedor.getUsername() + " huyó (retiro).";
         } else {
-            // estilo requerido (hundió todos)
+            // por ganar
             txt = ganador.getUsername() + " hundió todos los barcos de " + perdedor.getUsername()
                     + " en modo " + dificultad + ".";
         }
 
-        // logs por jugador (últimos 10, más reciente primero)
+        // logs por jugador ultimos 10
         ganador.addLog(txt);
         perdedor.addLog(txt);
 
-        // historial global (si lo quieres usar)
+        // historial 
         pushHistorial("Partida " + ganador.getUsername() + " vs " + perdedor.getUsername()
                 + " | Ganador: " + ganador.getUsername() + (fueRetiro ? " (RETIRO)" : " (HUNDIÓ TODO)"));
     }
 
-    /* =================== JUGADORES =================== */
+    //Jugadores
     public boolean registrarJugador(String user, char[] pass) {
         if (user == null || user.trim().isEmpty()) return false;
         if (buscarJugador(user) != null) return false;
@@ -116,7 +116,7 @@ public class Battleship {
         return false;
     }
 
-    /* =================== CONFIGURACIÓN =================== */
+    //Configuracion
     public String getDificultad() { return dificultad; }
     public void setDificultad(String dificultad) { this.dificultad = dificultad; }
 
@@ -134,7 +134,7 @@ public class Battleship {
         }
     }
 
-    /* =================== RANKING =================== */
+    //Ranking
     public Player[] getRanking() {
         Player[] ranking = new Player[totalJugadores];
         System.arraycopy(jugadores, 0, ranking, 0, totalJugadores);

@@ -142,7 +142,6 @@ public class Menu extends JFrame {
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        // TÍTULO: Ajustado (top 280) para quedar cerca de los botones y centrado
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(280, 0, 5, 0);
@@ -150,7 +149,6 @@ public class Menu extends JFrame {
         JLabel title = createShadowLabel("BATTLESHIP", 110, new Color(0, 225, 255));
         bg.add(title, gbc);
 
-        // CONTENEDOR DE CARTAS (Login, Registro, Botones principales)
         gbc.gridy = 1;
         gbc.insets = new Insets(0, 0, 0, 0);
         bg.add(panelContenedor, gbc);
@@ -263,7 +261,6 @@ public class Menu extends JFrame {
         return p;
     }
 
-    //Logica entrada de inicio
     private void ejecutarLogin() {
         String user = loginUserField.getText();
         char[] pass = loginPassField.getPassword();
@@ -329,9 +326,4 @@ public class Menu extends JFrame {
         this.setVisible(false);
         new Menu_Principal(sistema, this, sistema.getJugadorActual()).setVisible(true);
     }
-
-    /* public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Menu());
-    }
-     */
 }

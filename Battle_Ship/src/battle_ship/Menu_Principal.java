@@ -1,3 +1,7 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package battle_ship;
 
 import Logica.Battleship;
@@ -9,6 +13,11 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
+
+/**
+ *
+ * @author Nathan
+ */
 
 public class Menu_Principal extends JFrame {
 
@@ -23,7 +32,6 @@ public class Menu_Principal extends JFrame {
 
     private Image backgroundImage, buttonImage, buttonHoverImage;
 
-    // ✅ refs para refrescar datos y logs
     private JLabel lblUserData;
     private JLabel lblPuntosData;
     private JLabel lblDificultadData;
@@ -32,7 +40,6 @@ public class Menu_Principal extends JFrame {
     private DefaultListModel<String> logsModel;
     private JList<String> logsList;
 
-    // ✅ refs para refrescar ranking
     private DefaultTableModel rankingModel;
     private JTable rankingTable;
 
@@ -124,7 +131,6 @@ public class Menu_Principal extends JFrame {
         setContentPane(fondo);
     }
 
-    // ✅ Se llama desde Tablero al finalizar
     public void volverAMenuPrincipal() {
         refrescarDatosUI();
         refrescarLogsUI();
@@ -451,7 +457,7 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    /* ===================== PANEL RANKING (con refresh) ===================== */
+    //Panel Ranking
     private JPanel panelRanking() {
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
@@ -480,7 +486,6 @@ public class Menu_Principal extends JFrame {
         return p;
     }
 
-    // ✅ REFRESCA DATOS (puntos, user, config)
     private void refrescarDatosUI() {
         if (lblUsuario != null) {
             lblUsuario.setText("COMANDANTE: " + jugadorActual.getUsername());
@@ -499,7 +504,7 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    // ✅ LOGS con numeración 1-10 (1 = más reciente)
+    //Logs
     private void refrescarLogsUI() {
         if (logsModel == null) {
             return;
@@ -517,7 +522,7 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    // ✅ REFRESCA RANKING para que se vean puntos nuevos
+    //Rankings
     private void refrescarRankingUI() {
         if (rankingModel == null) {
             return;
@@ -540,7 +545,7 @@ public class Menu_Principal extends JFrame {
         }
     }
 
-    // ===================== JUGAR (tu misma lógica) =====================
+    //Jugar
     private void seleccionarOponente() {
         Player[] jugadores = sistema.getRanking();
         int count = 0;
@@ -582,7 +587,7 @@ public class Menu_Principal extends JFrame {
 
         JFrame setupFrame = new JFrame("Coloca tus barcos - Jugador: " + jugadorActual.getUsername());
 
-        // ✅ Dificultad aplicada
+        //Dificultad aplicada
         Orden setupPanel = new Orden(tableroJugador, sistema.getDificultad());
 
         setupFrame.add(setupPanel, BorderLayout.CENTER);
@@ -599,13 +604,13 @@ public class Menu_Principal extends JFrame {
 
             Tablero_Logico tableroEnemigo = new Tablero_Logico();
 
-            // ✅ Copiar barcos (incluye repetido si EASY)
+            //Copiar barcos
             tableroEnemigo.barcos.clear();
             for (Barco b : tableroJugador.barcos) {
                 tableroEnemigo.barcos.add(new Barco(b.codigo, b.prefijo, b.tamaño));
             }
 
-            // ✅ colocar enemigo random
+            //colocar enemigo random
             tableroEnemigo.regenerarPosiciones();
 
             JFrame ventanaJuego = new JFrame("Battleship - " + jugadorActual.getUsername() + " vs " + rival);
@@ -673,7 +678,7 @@ public class Menu_Principal extends JFrame {
             JOptionPane.showMessageDialog(this, "Modo de juego cambiado a: " + sel);
 
             refrescarDatosUI();
-            cards.show(cardPanel, "MAIN"); // ✅ vuelve automático
+            cards.show(cardPanel, "MAIN"); //vuelve automático
         }
     }
 
@@ -690,7 +695,7 @@ public class Menu_Principal extends JFrame {
             JOptionPane.showMessageDialog(this, "Dificultad cambiada a: " + sel);
 
             refrescarDatosUI();
-            cards.show(cardPanel, "MAIN"); // ✅ vuelve automático
+            cards.show(cardPanel, "MAIN"); //vuelve automático
         }
     }
 

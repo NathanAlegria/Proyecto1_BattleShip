@@ -2,11 +2,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java
  */
+
 package battle_ship;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.*;
 
 /**
@@ -22,12 +22,14 @@ public class Orden extends JPanel {
     private final JButton[][] botones = new JButton[SIZE][SIZE];
     private final Tablero_Logico tablero;
 
+    //controla dirección de colocación
     private boolean horizontal = true;
 
     private final JComboBox<String> selectorBarco;
     private final JLabel infoBarco;
     private final JLabel lblDificultad;
     private final JLabel lblRestantes;
+    private final JLabel lblOrientacion;
 
     private final LinkedHashMap<String, Barco> opciones = new LinkedHashMap<>();
     private final Set<String> colocados = new HashSet<>();
@@ -40,7 +42,6 @@ public class Orden extends JPanel {
     public Orden(Tablero_Logico t, String dificultad) {
 
         this.tablero = t;
-
         String dif = (dificultad == null) ? "NORMAL" : dificultad;
 
         setLayout(new BorderLayout());
@@ -54,6 +55,7 @@ public class Orden extends JPanel {
         infoBarco = new JLabel("Selecciona un barco");
         lblDificultad = new JLabel("Dificultad: " + dif);
         lblRestantes = new JLabel("");
+        lblOrientacion = new JLabel(" | Orientación: HORIZONTAL");
 
         selectorBarco.addActionListener(e -> {
             actualizarInfoBarco();
@@ -69,8 +71,16 @@ public class Orden extends JPanel {
                 JButton b = new JButton("~");
                 b.setPreferredSize(new Dimension(CELL_SIZE, CELL_SIZE));
                 b.setFocusPainted(false);
+                b.setRolloverEnabled(false);
+                b.setContentAreaFilled(true);
+                b.setOpaque(true);
                 b.setBackground(new Color(180, 210, 230));
                 b.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+
+                b.setHorizontalTextPosition(SwingConstants.CENTER);
+                b.setVerticalTextPosition(SwingConstants.CENTER);
+                b.setIconTextGap(0);
+                b.setMargin(new Insets(0, 0, 0, 0));
 
                 final int r = i, c = j;
                 b.addActionListener(ev -> colocar(r, c));
@@ -80,22 +90,29 @@ public class Orden extends JPanel {
             }
         }
 
+        //Botones Inferiores
         JButton rotar = new JButton("Rotar");
-        rotar.addActionListener(e -> horizontal = !horizontal);
+        rotar.addActionListener(e -> {
+            horizontal = !horizontal;
+            lblOrientacion.setText(" | Orientación: " +
+                    (horizontal ? "HORIZONTAL" : "VERTICAL"));
+        });
 
         JButton random = new JButton("Random");
         random.addActionListener(e -> colocarRandom());
 
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        bottom.add(rotar);
+        bottom.add(random);
+
+        //Panel Superior
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         top.add(lblDificultad);
         top.add(new JLabel(" | Barco: "));
         top.add(selectorBarco);
         top.add(infoBarco);
         top.add(lblRestantes);
-        top.add(random);
-
-        JPanel bottom = new JPanel();
-        bottom.add(rotar);
+        top.add(lblOrientacion);
 
         add(top, BorderLayout.NORTH);
         add(grid, BorderLayout.CENTER);
@@ -104,7 +121,8 @@ public class Orden extends JPanel {
         actualizarInfoBarco();
         actualizarRestantes();
     }
-
+    
+    //Dificultades
     private void configurarBarcosSegunDificultad(String dif) {
 
         Barco PA = new Barco("PA", "P", 5);
@@ -115,33 +133,32 @@ public class Orden extends JPanel {
         ArrayList<Barco> lista = new ArrayList<>();
 
         switch (dif) {
-            case "EASY": {
+            case "EASY":
                 lista.add(PA);
                 lista.add(AZ);
                 lista.add(SM);
                 lista.add(DT);
-                lista.add(new Barco("DT", "D", 2)); // EASY: repetido fijo 1 Destructor
+                lista.add(new Barco("DT", "D", 2));
                 break;
-            }
-            case "EXPERT": {
-                ArrayList<Barco> pool = new ArrayList<>(Arrays.asList(PA, AZ, SM, DT));
+
+            case "EXPERT":
+                ArrayList<Barco> pool =
+                        new ArrayList<>(Arrays.asList(PA, AZ, SM, DT));
                 Collections.shuffle(pool);
                 lista.add(pool.get(0));
                 lista.add(pool.get(1));
                 break;
-            }
-            case "GENIUS": {
+
+            case "GENIUS":
                 Barco[] base = {PA, AZ, SM, DT};
                 lista.add(base[new Random().nextInt(base.length)]);
                 break;
-            }
-            default: {
+
+            default:
                 lista.add(PA);
                 lista.add(AZ);
                 lista.add(SM);
                 lista.add(DT);
-                break;
-            }
         }
 
         tablero.barcos.clear();
@@ -166,7 +183,8 @@ public class Orden extends JPanel {
 
     private void cargarComboDesdeOpciones() {
         selectorBarco.removeAllItems();
-        for (String key : opciones.keySet()) selectorBarco.addItem(key);
+        for (String key : opciones.keySet())
+            selectorBarco.addItem(key);
     }
 
     private void actualizarInfoBarco() {
@@ -176,32 +194,31 @@ public class Orden extends JPanel {
             return;
         }
         Barco b = opciones.get(item);
-        if (b != null) infoBarco.setText("Barco " + b.codigo + " - Largo: " + b.tamaño);
+        if (b != null)
+            infoBarco.setText("Barco " + b.codigo +
+                    " - Largo: " + b.tamaño);
     }
 
     private void actualizarRestantes() {
-        lblRestantes.setText(" | Faltan: " + selectorBarco.getItemCount());
+        lblRestantes.setText(" | Faltan: " +
+                selectorBarco.getItemCount());
     }
 
+    // Coloca manualmente
     private void colocar(int f, int c) {
 
         String item = (String) selectorBarco.getSelectedItem();
-        if (item == null) {
-            JOptionPane.showMessageDialog(this, "Ya colocaste todos los barcos");
-            return;
-        }
+        if (item == null) return;
 
-        if (colocados.contains(item)) {
-            JOptionPane.showMessageDialog(this, "Ese barco ya fue colocado");
-            return;
-        }
+        if (colocados.contains(item)) return;
 
         Barco barco = opciones.get(item);
         String id = itemToId.get(item);
         if (barco == null || id == null) return;
 
         if (!puedeColocarLocal(barco, f, c, horizontal)) {
-            JOptionPane.showMessageDialog(this, "No se puede colocar aquí");
+            JOptionPane.showMessageDialog(this,
+                    "No se puede colocar aquí");
             return;
         }
 
@@ -211,8 +228,10 @@ public class Orden extends JPanel {
 
             tablero.matriz[ff][cc] = id;
 
-            botones[ff][cc].setIcon(escalarImagen(barco.prefijo, i + 1, horizontal));
-            botones[ff][cc].setText("");
+            ImageIcon icon =
+                    escalarImagen(barco.prefijo, i + 1);
+            botones[ff][cc].setIcon(icon);
+            botones[ff][cc].setText(icon == null ? "~" : "");
         }
 
         colocados.add(item);
@@ -220,34 +239,32 @@ public class Orden extends JPanel {
 
         actualizarInfoBarco();
         actualizarRestantes();
-
-        if (selectorBarco.getItemCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Todos los barcos colocados");
-        }
     }
 
+    // Colocar Barcos Random
     public void colocarRandom() {
         limpiarMatriz();
         colocados.clear();
-
         colocarTodosRandomLocal();
         redibujarDesdeLogica();
-
         selectorBarco.removeAllItems();
         infoBarco.setText("Todos los barcos colocados");
         actualizarRestantes();
     }
 
     private void colocarTodosRandomLocal() {
+
         Random rand = new Random();
         HashMap<String, Integer> contador = new HashMap<>();
 
         for (Barco b : tablero.barcos) {
+
             int n = contador.getOrDefault(b.prefijo, 0) + 1;
             contador.put(b.prefijo, n);
             String id = b.prefijo + "#" + n;
 
             boolean colocadoOK = false;
+
             while (!colocadoOK) {
                 int f = rand.nextInt(SIZE);
                 int c = rand.nextInt(SIZE);
@@ -266,40 +283,47 @@ public class Orden extends JPanel {
     }
 
     private void redibujarDesdeLogica() {
-        for (int i = 0; i < SIZE; i++) {
+
+        for (int i = 0; i < SIZE; i++)
             for (int j = 0; j < SIZE; j++) {
                 botones[i][j].setIcon(null);
                 botones[i][j].setText("~");
             }
-        }
 
         HashMap<String, Integer> contador = new HashMap<>();
 
         for (Barco b : tablero.barcos) {
+
             int n = contador.getOrDefault(b.prefijo, 0) + 1;
             contador.put(b.prefijo, n);
 
             String id = b.prefijo + "#" + n;
             int parte = 1;
 
-            for (int i = 0; i < SIZE; i++) {
-                for (int j = 0; j < SIZE; j++) {
+            for (int i = 0; i < SIZE; i++)
+                for (int j = 0; j < SIZE; j++)
                     if (id.equals(tablero.matriz[i][j])) {
-                        botones[i][j].setIcon(escalarImagen(b.prefijo, parte++, true));
-                        botones[i][j].setText("");
+                        ImageIcon icon =
+                                escalarImagen(b.prefijo, parte++);
+                        botones[i][j].setIcon(icon);
+                        botones[i][j].setText(icon == null ? "~" : "");
                     }
-                }
-            }
         }
     }
 
-    private boolean puedeColocarLocal(Barco b, int f, int c, boolean horizontal) {
+    private boolean puedeColocarLocal(Barco b, int f, int c,
+                                      boolean horizontal) {
+
         for (int i = 0; i < b.tamaño; i++) {
             int ff = f + (horizontal ? 0 : i);
             int cc = c + (horizontal ? i : 0);
 
-            if (ff < 0 || cc < 0 || ff >= SIZE || cc >= SIZE) return false;
-            if (tablero.matriz[ff][cc] != null) return false;
+            if (ff < 0 || cc < 0 ||
+                    ff >= SIZE || cc >= SIZE)
+                return false;
+
+            if (tablero.matriz[ff][cc] != null)
+                return false;
         }
         return true;
     }
@@ -310,32 +334,29 @@ public class Orden extends JPanel {
                 tablero.matriz[i][j] = null;
     }
 
-    private ImageIcon escalarImagen(String prefijo, int parte, boolean horizontal) {
-        String ruta = "/Imagenes/" + prefijo + parte + ".png";
-        java.net.URL url = getClass().getResource(ruta);
+    //Imagenes
+    private ImageIcon escalarImagen(String prefijo, int parte) {
+
+        String ruta = "/Imagenes/" +
+                prefijo + parte + ".png";
+
+        java.net.URL url =
+                getClass().getResource(ruta);
+
+        if (url == null) {
+            ruta = "/Imagenes/" +
+                    prefijo + parte + ".PNG";
+            url = getClass().getResource(ruta);
+        }
 
         if (url == null) return null;
 
         ImageIcon icon = new ImageIcon(url);
-        Image img = icon.getImage().getScaledInstance(CELL_SIZE, CELL_SIZE, Image.SCALE_SMOOTH);
+        Image img = icon.getImage()
+                .getScaledInstance(CELL_SIZE,
+                        CELL_SIZE,
+                        Image.SCALE_SMOOTH);
 
-        if (!horizontal) img = rotarImagen(img);
         return new ImageIcon(img);
     }
-
-    private Image rotarImagen(Image img) {
-        BufferedImage original = new BufferedImage(CELL_SIZE, CELL_SIZE, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = original.createGraphics();
-        g.drawImage(img, 0, 0, null);
-        g.dispose();
-
-        BufferedImage rotated = new BufferedImage(CELL_SIZE, CELL_SIZE, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = rotated.createGraphics();
-        g2.rotate(Math.toRadians(90), CELL_SIZE / 2.0, CELL_SIZE / 2.0);
-        g2.drawImage(original, 0, 0, null);
-        g2.dispose();
-
-        return rotated;
-    }
 }
-

@@ -9,10 +9,15 @@ import Logica.Player;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
+
+/**
+ *
+ * @author Nathan
+ */
 
 public class Tablero extends JPanel {
 
+    //Configuracion Tablero
     private static final int SIZE = 8;
     private static final int CELL = 60;
 
@@ -23,18 +28,19 @@ public class Tablero extends JPanel {
     private final Tablero_Logico logicaEnemigo;
 
     private final boolean modoTutorial;
+    private final boolean modoArcade;
 
     private final String nombreJugador;
     private final String nombreEnemigo;
 
     private final JTextArea chat = new JTextArea(6, 40);
     private JLabel turnoLabel;
-
     private boolean turnoDeJugador1 = true;
 
     private final JTextField filaInput = new JTextField(3);
-    private final JTextField colInput = new JTextField(3);
+    private final JTextField colInput  = new JTextField(3);
 
+    //Barras de Vida
     private JProgressBar[] barrasJ1;
     private JProgressBar[] barrasJ2;
 
@@ -71,23 +77,32 @@ public class Tablero extends JPanel {
         this.logicaEnemigo = tEnemigo;
 
         this.modoTutorial = tutorial;
+        this.modoArcade = "ARCADE".equalsIgnoreCase(sistema.getModoJuego());
 
         setLayout(new BorderLayout());
 
-        add(crearTop(), BorderLayout.NORTH);
-        add(crearCentro(), BorderLayout.CENTER);
-        add(crearInferior(), BorderLayout.SOUTH);
+        add(crearTop(), BorderLayout.NORTH);      
+        add(crearCentro(), BorderLayout.CENTER);   
+        add(crearInferior(), BorderLayout.SOUTH);  
 
         chat.setEditable(false);
 
         construirBarras();
         actualizarTurno();
 
-        // Mis barcos siempre visibles; enemigo solo en tutorial
-        redibujarTablero(tableroJugador, logicaJugador, true);
-        redibujarTablero(tableroEnemigo, logicaEnemigo, modoTutorial);
+        SwingUtilities.invokeLater(() -> {
+            boolean mostrarJ1 = !modoArcade;            
+            boolean mostrarJ2 = (!modoArcade) && modoTutorial;
+
+            redibujarTablero(tableroJugador, logicaJugador, mostrarJ1);
+            redibujarTablero(tableroEnemigo, logicaEnemigo, mostrarJ2);
+
+            revalidate();
+            repaint();
+        });
     }
 
+        //Nombres y Turnos
     private JPanel crearTop() {
         JPanel p = new JPanel(new GridLayout(1, 3));
         JLabel j1 = new JLabel("Jugador: " + nombreJugador, SwingConstants.CENTER);
@@ -102,6 +117,7 @@ public class Tablero extends JPanel {
         return p;
     }
 
+    // Fondo Tblero y Vidas
     private JPanel crearCentro() {
         JPanel fondo = new FondoPanel("/Imagenes/fjuego.jpg");
         fondo.setLayout(new BorderLayout());
@@ -109,7 +125,8 @@ public class Tablero extends JPanel {
         JPanel fila = new JPanel(new GridLayout(1, 4, 15, 0));
         fila.setOpaque(false);
 
-        panelVidasJ1 = new PanelTransparente(new Color(0, 0, 0, 140));
+        // Panel vidas jugador
+        panelVidasJ1 = new PanelTransparente(new Color(0, 0, 0, 150));
         panelVidasJ1.setLayout(new GridLayout(0, 1, 0, 6));
         javax.swing.border.TitledBorder b1 = BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.WHITE),
@@ -118,13 +135,16 @@ public class Tablero extends JPanel {
         b1.setTitleColor(Color.WHITE);
         panelVidasJ1.setBorder(b1);
 
+        // Tablero jugador
         JPanel panelTableroJugador = crearPanelConCoordenadas(tableroJugador);
         panelTableroJugador.setOpaque(false);
 
+        // Tablero enemigo
         JPanel panelTableroEnemigo = crearPanelConCoordenadas(tableroEnemigo);
         panelTableroEnemigo.setOpaque(false);
 
-        panelVidasJ2 = new PanelTransparente(new Color(0, 0, 0, 140));
+        // Panel vidas enemigo
+        panelVidasJ2 = new PanelTransparente(new Color(0, 0, 0, 150));
         panelVidasJ2.setLayout(new GridLayout(0, 1, 0, 6));
         javax.swing.border.TitledBorder b2 = BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.WHITE),
@@ -142,6 +162,7 @@ public class Tablero extends JPanel {
         return fondo;
     }
 
+    // Crea tablero con coordenadas 0-7
     private JPanel crearPanelConCoordenadas(JButton[][] botones) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
@@ -155,12 +176,22 @@ public class Tablero extends JPanel {
         for (int i = 0; i < SIZE; i++) {
             grid.add(labelCoord(String.valueOf(i)));
             for (int j = 0; j < SIZE; j++) {
+
                 JButton b = new JButton("~");
                 b.setPreferredSize(new Dimension(CELL, CELL));
                 b.setFocusPainted(false);
-                b.setHorizontalAlignment(SwingConstants.CENTER);
-                b.setVerticalAlignment(SwingConstants.CENTER);
                 b.setFont(new Font("Arial", Font.BOLD, 16));
+
+                b.setRolloverEnabled(false);
+                b.setBorderPainted(true);
+
+                b.setHorizontalTextPosition(SwingConstants.CENTER);
+                b.setVerticalTextPosition(SwingConstants.CENTER);
+                b.setIconTextGap(0);
+                b.setMargin(new Insets(0, 0, 0, 0));
+                b.setContentAreaFilled(true);
+                b.setOpaque(true);
+
                 botones[i][j] = b;
                 grid.add(b);
             }
@@ -177,10 +208,16 @@ public class Tablero extends JPanel {
         return l;
     }
 
+    //Ataque Retiro y Chat
     private JPanel crearInferior() {
         JPanel inferior = new JPanel(new BorderLayout());
 
-        JPanel ataquePanel = new JPanel();
+        JPanel ataquePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 8));
+
+        JLabel retiroInfo = new JLabel("🏳 RETIRO: escribe -1 en FILA y -1 en COLUMNA");
+        retiroInfo.setFont(new Font("Arial", Font.BOLD, 14));
+        retiroInfo.setForeground(new Color(150, 0, 0)); // rojo oscuro
+
         JButton atacarBtn = new JButton("Atacar");
         atacarBtn.addActionListener(e -> atacarManual());
 
@@ -190,12 +227,15 @@ public class Tablero extends JPanel {
         ataquePanel.add(colInput);
         ataquePanel.add(atacarBtn);
 
+        ataquePanel.add(retiroInfo);
+
         inferior.add(ataquePanel, BorderLayout.NORTH);
         inferior.add(new JScrollPane(chat), BorderLayout.CENTER);
 
         return inferior;
     }
 
+    //Barras de Vida
     private void construirBarras() {
         panelVidasJ1.removeAll();
         panelVidasJ2.removeAll();
@@ -272,27 +312,8 @@ public class Tablero extends JPanel {
         };
     }
 
-    private void limpiarFUI(JButton[][] botones) {
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                if ("F".equals(botones[i][j].getText())) {
-                    botones[i][j].setIcon(null);
-                    botones[i][j].setText("~");
-                    botones[i][j].setForeground(Color.BLACK);
-                }
-            }
-        }
-    }
-
-    private void limpiarFAlSiguienteTurno() {
-        limpiarFUI(tableroJugador);
-        limpiarFUI(tableroEnemigo);
-    }
-
+    //Atacar Coordenadas
     private void atacarManual() {
-
-        // F desaparece cuando el siguiente jugador va a atacar
-        limpiarFAlSiguienteTurno();
 
         int f, c;
 
@@ -304,7 +325,7 @@ public class Tablero extends JPanel {
             return;
         }
 
-        // Retiro solo si ambos son -1
+        //Retiro con -1 -1
         if (f == -1 && c == -1) {
             int confirm = JOptionPane.showConfirmDialog(this, "¿Seguro que deseas retirarte?", "Retiro", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
@@ -321,6 +342,7 @@ public class Tablero extends JPanel {
             return;
         }
 
+        //Turno de Jugadores
         if (turnoDeJugador1) {
             if (logicaEnemigo.yaAtacado(f, c)) {
                 JOptionPane.showMessageDialog(this, "⚠ Ya atacaste esa posición.");
@@ -339,6 +361,7 @@ public class Tablero extends JPanel {
         actualizarTurno();
     }
 
+    //Ataque(Fallo,Acierto y Regenerar Tablero)
     private void procesarAtaque(Tablero_Logico t,
                                 JButton[][] botones,
                                 JProgressBar[] barras,
@@ -380,13 +403,22 @@ public class Tablero extends JPanel {
             return;
         }
 
+        // Regenera posiciones
         t.regenerarPosiciones();
 
-        boolean mostrar = (botones == tableroJugador);
-        if (!mostrar) mostrar = modoTutorial;
+        boolean mostrar;
+        if (modoArcade) {
+            mostrar = false;
+        } else if (botones == tableroJugador) {
+            mostrar = true;
+        } else {
+            mostrar = modoTutorial;
+        }
+
         redibujarTablero(botones, t, mostrar);
     }
 
+    //Fin de Juego
     private void finalizarJuego(Player ganador, Player perdedor, boolean fueRetiro) {
         sistema.registrarResultadoPartida(ganador, perdedor, fueRetiro);
         JOptionPane.showMessageDialog(this, "🏆 El jugador " + ganador.getUsername() + " fue el triunfador.");
@@ -394,6 +426,7 @@ public class Tablero extends JPanel {
         if (menuPrincipal != null) menuPrincipal.volverAMenuPrincipal();
     }
 
+    
     private void actualizarTurno() {
         if (turnoDeJugador1) {
             turnoLabel.setText("✅ TURNO DE " + nombreJugador);
@@ -404,31 +437,34 @@ public class Tablero extends JPanel {
         }
     }
 
+    //Redibujar Tablero
     private void redibujarTablero(JButton[][] botones, Tablero_Logico t, boolean mostrarBarcos) {
 
+        // Primero dibuja marcas: X (Acierto), F (fallo) o ~ (agua)
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
-
-                if (t.getEstado(i, j) == 2) {
-                    botones[i][j].setIcon(null);
-                    botones[i][j].setText("X");
-                    botones[i][j].setForeground(Color.BLACK);
-                    continue;
-                }
-
-                if ("F".equals(botones[i][j].getText())) {
-                    botones[i][j].setIcon(null);
-                    continue;
-                }
-
                 botones[i][j].setIcon(null);
-                botones[i][j].setText("~");
                 botones[i][j].setForeground(Color.BLACK);
+
+                byte st = t.getEstado(i, j);
+                if (st == 2) {
+                    botones[i][j].setText("X");
+                } else if (st == 1) {
+                    botones[i][j].setText("F");
+                    botones[i][j].setForeground(Color.RED);
+                } else {
+                    botones[i][j].setText("~");
+                }
             }
         }
 
-        if (!mostrarBarcos) return;
+        if (!mostrarBarcos) {
+            revalidate();
+            repaint();
+            return;
+        }
 
+        // Colocar Barcos
         for (int idx = 0; idx < t.barcos.size(); idx++) {
 
             Barco b = t.barcos.get(idx);
@@ -455,9 +491,7 @@ public class Tablero extends JPanel {
             if (count == 0) continue;
 
             boolean horizontal = true;
-            if (count >= 2) {
-                if (cc[0] == cc[1]) horizontal = false;
-            }
+            if (count >= 2 && cc[0] == cc[1]) horizontal = false;
 
             for (int a = 0; a < count - 1; a++) {
                 for (int d = 0; d < count - a - 1; d++) {
@@ -473,16 +507,19 @@ public class Tablero extends JPanel {
                 int r = rr[k];
                 int c = cc[k];
 
-                if (t.getEstado(r, c) == 2) continue;
-                if ("F".equals(botones[r][c].getText())) continue;
+                if (t.getEstado(r, c) != 0) continue;
 
-                ImageIcon icon = escalarImagenSeguro(b.prefijo, k + 1, botones[r][c], horizontal);
+                ImageIcon icon = escalarImagenSeguro(b.prefijo, k + 1);
                 botones[r][c].setIcon(icon);
                 botones[r][c].setText(icon == null ? "~" : "");
             }
         }
+
+        revalidate();
+        repaint();
     }
 
+    //Imagenes
     private java.net.URL buscarImagen(String archivo) {
         String[] rutas = {
                 "/Imagenes/" + archivo,
@@ -498,42 +535,28 @@ public class Tablero extends JPanel {
         return null;
     }
 
-    private ImageIcon escalarImagenSeguro(String prefijo, int parte, JButton btn, boolean horizontal) {
+    // Ajustar Imagen segun cuadros
+    private ImageIcon escalarImagenSeguro(String prefijo, int parte) {
 
         String archivo = prefijo + parte + ".png";
         java.net.URL url = buscarImagen(archivo);
 
         if (url == null) {
-            System.out.println("No se encontró imagen: " + archivo);
+            archivo = prefijo + parte + ".PNG";
+            url = buscarImagen(archivo);
+        }
+
+        if (url == null) {
+            System.out.println("No se encontró imagen: " + prefijo + parte);
             return null;
         }
 
         ImageIcon icon = new ImageIcon(url);
-
-        int w = btn.getWidth() > 0 ? btn.getWidth() : CELL;
-        int h = btn.getHeight() > 0 ? btn.getHeight() : CELL;
-
-        Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
-        if (!horizontal) img = rotar90(img, w, h);
-
+        Image img = icon.getImage().getScaledInstance(CELL, CELL, Image.SCALE_SMOOTH);
         return new ImageIcon(img);
     }
 
-    private Image rotar90(Image img, int w, int h) {
-        BufferedImage original = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = original.createGraphics();
-        g.drawImage(img, 0, 0, null);
-        g.dispose();
-
-        BufferedImage rotated = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = rotated.createGraphics();
-        g2.rotate(Math.toRadians(90), w / 2.0, h / 2.0);
-        g2.drawImage(original, 0, 0, null);
-        g2.dispose();
-
-        return rotated;
-    }
-
+    //Panel transparente de Vidas
     private static class PanelTransparente extends JPanel {
         private final Color bg;
 
@@ -552,13 +575,13 @@ public class Tablero extends JPanel {
         }
     }
 
+    //Fondo
     private static class FondoPanel extends JPanel {
         private Image fondo;
 
         public FondoPanel(String ruta) {
             java.net.URL url = getClass().getResource(ruta);
             if (url != null) fondo = new ImageIcon(url).getImage();
-            else System.out.println("No se encontró fondo: " + ruta);
         }
 
         @Override

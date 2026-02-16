@@ -8,6 +8,7 @@ package Logica;
  *
  * @author Nathan
  */
+
 public class Player {
 
     private String username;
@@ -29,7 +30,6 @@ public class Player {
     public String getUsername() { return username; }
     public int getPuntos() { return puntos; }
 
-    // devuelve el arreglo completo (con nulls)
     public String[] getLogs() { return logs; }
 
     public void setUsername(String username) {
@@ -47,11 +47,11 @@ public class Player {
     public void addPuntos(int p) { puntos += p; }
     public void sumarPuntos(int p) { addPuntos(p); }
 
-    // Más reciente primero
     public void addLog(String mensaje) {
         for (int i = Math.min(logCount, 9); i > 0; i--) {
             logs[i] = logs[i - 1];
         }
+
         logs[0] = mensaje;
         if (logCount < 10) logCount++;
     }

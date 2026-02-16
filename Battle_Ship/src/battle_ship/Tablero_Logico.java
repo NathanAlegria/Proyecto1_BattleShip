@@ -11,7 +11,6 @@ import java.util.Random;
  *
  * @author Nathan
  */
-
 public class Tablero_Logico {
 
     public static final int SIZE = 8;
@@ -19,7 +18,7 @@ public class Tablero_Logico {
     public String[][] matriz = new String[SIZE][SIZE];
     public ArrayList<Barco> barcos = new ArrayList<>();
 
-    // 0 = no atacado, 1 = fallo, 2 = hit
+    // 0 = no atacado, 1 = fallo, 2 = acierto
     private byte[][] estado = new byte[SIZE][SIZE];
 
     public Tablero_Logico() {
@@ -43,6 +42,15 @@ public class Tablero_Logico {
         return estado[f][c] != 0;
     }
 
+    //Lipiar Fallos (F) para siguiente turno
+    public void limpiarFallosTurno() {
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if (estado[i][j] == 1) estado[i][j] = 0;
+            }
+        }
+    }
+
     public String idPorIndice(int idx) {
         if (idx < 0 || idx >= barcos.size()) return null;
 
@@ -56,6 +64,7 @@ public class Tablero_Logico {
 
     public Barco barcoDeId(String id) {
         if (id == null) return null;
+
         int pos = id.indexOf('#');
         if (pos == -1) return null;
 
@@ -84,11 +93,11 @@ public class Tablero_Logico {
         String id = matriz[f][c];
 
         if (id == null) {
-            estado[f][c] = 1;
+            estado[f][c] = 1; // fallo
             return null;
         }
 
-        estado[f][c] = 2;
+        estado[f][c] = 2; // acierto
 
         Barco b = barcoDeId(id);
         if (b != null) b.recibirImpacto();
@@ -103,26 +112,38 @@ public class Tablero_Logico {
         return true;
     }
 
+    //Limpiar Fallos
     private void limpiarFallos() {
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
-                if (estado[i][j] == 1) {
-                    estado[i][j] = 0;
-                }
+                if (estado[i][j] == 1) estado[i][j] = 0;
             }
         }
     }
 
+    
+    //Limpiar aciertos
+    private void limpiarHits() {
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if (estado[i][j] == 2) estado[i][j] = 0;
+            }
+        }
+    }
+    
+    //Regenerar Tablero despues de acierto
     public boolean regenerarPosiciones() {
 
         String[][] backup = copiarMatriz();
 
-        // Permitir volver a atacar casillas donde antes fue fallo
         limpiarFallos();
+        limpiarHits();
 
-        for (int i = 0; i < SIZE; i++)
-            for (int j = 0; j < SIZE; j++)
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
                 matriz[i][j] = null;
+            }
+        }
 
         Random r = new Random();
 
@@ -169,9 +190,7 @@ public class Tablero_Logico {
 
             if (ff < 0 || ff >= SIZE || cc < 0 || cc >= SIZE) return false;
 
-            // No colocar encima de X (hits)
-            if (estado[ff][cc] != 0) return false;
-
+            if (estado[ff][cc] != 0) return false; // no encima de atacadas
             if (matriz[ff][cc] != null) return false;
         }
         return true;
@@ -185,3 +204,5 @@ public class Tablero_Logico {
         return copia;
     }
 }
+
+
